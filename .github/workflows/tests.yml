@@ -1,0 +1,48 @@
+name: tests
+
+# 三套测试都是纯 Node、零依赖、不联网，所以 CI 很轻。
+# 关键前提已核对：Node 24 内置 zstd（node:zlib 的 zstdDecompressSync），
+# 所以不需要额外安装任何东西。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 是 package.json 里 engines 的下限；24 是内置 zstd 的最低版本
+        node-version: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: 版本信息
+        run: node --version
+
+      - name: host 端到端自测
+        run: node tools/selftest.mjs
+
+      - name: 渲染测试
+        run: node tools/render-test.mjs .
+
+      - name: 心跳测试
+        run: node tools/heartbeat-test.mjs .
+
+      - name: 立即刷新测试
+        run: node tools/refresh-test.mjs .
+
+      - name: 预览页自检（同时确认生成结果与已提交的一致）
+        run: |
+          node tools/gen-preview.mjs
+          git diff --exit-code docs/preview.html || {
+            echo "::error::docs/preview.html 与 lib/client.js 不同步，请本地跑 node tools/gen-preview.mjs 后提交";
+            exit 1;
+          }

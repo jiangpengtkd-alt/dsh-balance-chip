@@ -1,0 +1,58 @@
+{
+  "name": "dsh-balance-mini",
+  "version": "0.10.2",
+  "description": "DSH web GUI plugin: shows DeepSeek account balance and per-request/session cost next to the context meter, priced with DeepSeek's peak/off-peak rules (weekday hours, weekends and PRC statutory holidays). Host-side reads only; credentials never leave the machine.",
+  "type": "module",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "CHANGELOG.md",
+    "INSTALL.md",
+    "LICENSE",
+    "README.md",
+    "cordis.patch.yml",
+    "docs/preview.html",
+    "lib/",
+    "tools/gen-preview.mjs",
+    "tools/heartbeat-test.mjs",
+    "tools/refresh-test.mjs",
+    "tools/render-test.mjs",
+    "tools/selftest.mjs"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "deepseek-harness",
+    "deepseek",
+    "balance",
+    "cost",
+    "usage",
+    "billing"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-cordis-client-runner"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

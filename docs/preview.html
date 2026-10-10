@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dsh-balance-mini — 样式预览</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════
+     本文件的 CSS 由 tools/gen-preview.mjs 从 lib/client.js 的 CSS 数组
+     自动求值生成 —— 请勿手改，改了下次生成会被覆盖。
+     手抄 CSS 会与实现脱节（本项目曾因此让预览的分隔点间距、gap、
+     hover 态全部与实机不符）。
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* ── 实机 design token（深色主题实测值） ── */
+  :root {
+    --dsh-content-font-size-secondary: 13px;
+    --dsh-content-font-delta-secondary: 0px;
+    --dsw-alias-label-primary: #e6e6e6;
+    --dsw-alias-label-secondary: #8a8f98;
+    --dsw-alias-label-tertiary: #6b7078;
+    --dsw-alias-label-quaternary: rgba(128,128,128,.7);
+    --dsw-alias-separator-primary: rgba(128,128,128,.5);
+    /* 头部与正文之间的分割线。官方 .Xt1eiG_titleRule 用的是 border-l2，
+       深色主题真实值 #ffffff1f（12% 白），取自官方主题包而非估的。 */
+    --dsw-alias-border-l2: #ffffff1f;
+    /* 状态点与小方点用到的语义色（值取自官方主题包，非手调）：
+       success = static-green-500 = #22c55e
+       warn    = static-amber-500 = #f59e0b
+       deepseek-400（品牌蓝）      = #7aaaff
+       缺了这些变量，var() 会解析失败 → 圆点变透明（预览里曾因此看不到绿点和蓝点） */
+    --dsw-alias-state-success-primary: #22c55e;
+    --dsw-alias-state-warn-primary: #f59e0b;
+    --dsw-alias-state-error-primary: #e5534b;
+    --dsw-static-deepseek-400: #7aaaff;
+    --dsw-alias-interactive-bg-hover: rgba(128,128,128,.14);
+    --dsw-specific-menu: #1b1e26;
+    --dsw-radius-lg: 10px;
+    --dsw-menu-backdrop-filter: none;
+    --dsw-elevation-prominent: 0 6px 24px rgba(0,0,0,.45);
+  }
+  body {
+    margin: 0; padding: 22px 26px 34px; background: #14161b;
+    color: var(--dsw-alias-label-secondary);
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  h1 { font-size: 17px; font-weight: 600; margin: 0 0 4px; color: var(--dsw-alias-label-primary); }
+  .sub { color: var(--dsw-alias-label-tertiary); font-size: 12px; margin: 0 0 22px; line-height: 1.7; }
+  h2 { font-size: 13px; font-weight: 600; margin: 24px 0 8px; color: var(--dsw-alias-label-primary); }
+  .note { color: var(--dsw-alias-label-tertiary); font-size: 12px; margin: 8px 0 0; line-height: 1.7; }
+  .cap-note { color: var(--dsw-alias-label-tertiary); font-size: 11px; margin-top: 6px; }
+  code { color: #a8b1c0; font-size: 12px; }
+  .frame { background: #191c22; border: 1px solid rgba(128,128,128,.16); border-radius: 8px; padding: 2px 12px 6px; }
+
+  /* ── 原厂「输入框下方那一排」容器 ── */
+  .dock {
+    box-sizing: border-box; min-width: 0; max-width: 100%;
+    display: flex; justify-content: center; align-items: center; gap: 12px;
+    font-size: calc(var(--dsh-content-font-size-secondary, 13px) - 1px);
+    line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px));
+    padding: 6px 0;
+  }
+  /* 上下文圆圈示意（原厂 ContextMeter） */
+  .ctx { display: inline-flex; align-items: center; gap: 6px; color: var(--dsw-alias-label-tertiary); }
+  .ctx .ring { width: 14px; height: 14px; border-radius: 50%; flex: none;
+    background: conic-gradient(#4c8dff 0 68%, rgba(128,128,128,.28) 68% 100%);
+    -webkit-mask: radial-gradient(circle, transparent 0 4.5px, #000 4.5px 100%);
+            mask: radial-gradient(circle, transparent 0 4.5px, #000 4.5px 100%); }
+
+  /* ══ 原厂 StatsPills 真实 CSS（供并排对照） ══ */
+  .np_root{box-sizing:border-box;min-width:0;max-width:100%;font-size:calc(var(--dsh-content-font-size-secondary,13px) - 1px);line-height:calc(20px + var(--dsh-content-font-delta-secondary,0px));justify-content:center;gap:12px;display:flex}
+  .np_anchor{min-width:0;display:inline-flex}
+  .np_pill{box-sizing:border-box;corner-shape:round;max-width:100%;color:var(--dsw-alias-label-tertiary);font:inherit;font-variant-numeric:tabular-nums;line-height:inherit;white-space:nowrap;background:0 0;border:none;border-radius:999px;align-items:center;gap:6px;padding:1px 8px;display:inline-flex}
+  .np_pill svg{flex:none;width:14px;height:14px}
+  button.np_pill{cursor:pointer}
+  button.np_pill:hover,button.np_pill[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}
+  .np_label{text-overflow:ellipsis;min-width:0;overflow:hidden}
+  .np_sep{color:var(--dsw-alias-separator-primary);margin:0 6px}
+
+  /* ══ 本插件真实 CSS —— 从 lib/client.js 求值得到 ══ */
+  .dsh-balance-mini-chip{display:none;order:1;box-sizing:border-box;align-items:center;gap:0;padding:1px 8px;border-radius:999px;border:none;background:0 0;color:var(--dsw-alias-label-tertiary);font-family:inherit;font-size:calc(var(--dsh-content-font-size-secondary,13px) - 1px);font-weight:inherit;line-height:calc(20px + var(--dsh-content-font-delta-secondary,0px));font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer;user-select:none}
+  .dsh-balance-mini-chip.ready{display:inline-flex}
+  .dsh-balance-mini-chip:hover,.dsh-balance-mini-chip[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}
+  .dsh-balance-mini-chip>span{display:block;font:inherit;line-height:inherit}
+  .dsh-balance-mini-dot{corner-shape:round;width:5px;height:5px;border-radius:2px;flex:none;background:var(--dsw-alias-label-quaternary);align-self:center;margin-right:5px}
+  .dsh-balance-mini-chip.lv-green .dsh-balance-mini-dot{background:var(--dsw-alias-state-success-primary)}
+  .dsh-balance-mini-chip.lv-yellow .dsh-balance-mini-dot{background:var(--dsw-alias-state-warn-primary)}
+  .dsh-balance-mini-chip.lv-red .dsh-balance-mini-dot{background:var(--dsw-alias-state-error-primary)}
+  .dsh-balance-mini-chip.lv-gray .dsh-balance-mini-dot{background:var(--dsw-alias-label-quaternary)}
+  .dsh-balance-mini-minidot{corner-shape:round;width:5px;height:5px;border-radius:2px;flex:none;background:var(--dsw-alias-label-quaternary);align-self:center;margin-right:4px}
+  .dsh-balance-mini-chip .dsh-balance-mini-minidot.dot-sess{background:var(--dsw-static-deepseek-400)}
+  .dsh-balance-mini-chip .dsh-balance-mini-minidot.dot-turn{background:#a78bfa}
+  .dsh-balance-mini-chip .dsh-balance-mini-gap{flex:none;width:6px}
+  .dsh-balance-mini-chip .dsh-balance-mini-cap{color:var(--dsw-alias-label-tertiary);margin-right:4px}
+  .dsh-balance-mini-chip .dsh-balance-mini-cap+span{transition:color .15s;font-variant-numeric:tabular-nums}
+  .dsh-balance-mini-panel{z-index:1100;box-sizing:border-box;padding:16px;border-radius:var(--dsw-radius-lg,10px);background:var(--dsw-specific-menu,#1b1e26);backdrop-filter:var(--dsw-menu-backdrop-filter,none);box-shadow:var(--dsw-elevation-prominent,0 6px 24px rgba(0,0,0,.35));color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;width:max-content;min-width:min(300px,calc(100vw - 24px));max-width:min(440px,calc(100vw - 24px));cursor:default}
+  .dsh-balance-mini-panel .bm-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px;color:var(--dsw-alias-label-primary);font-weight:500}
+  .dsh-balance-mini-panel .bm-head-main{display:inline-flex;align-items:center;gap:6px;flex:none}
+  .dsh-balance-mini-panel .bm-head-value{font-variant-numeric:tabular-nums}
+  .dsh-balance-mini-panel .bm-head-day{margin-left:auto;display:inline-flex;align-items:baseline;gap:6px;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums}
+  .dsh-balance-mini-panel .bm-head-rule{height:0;border-top:.5px solid var(--dsw-alias-border-l2);margin:0 0 10px}
+  .dsh-balance-mini-panel .bm-details{display:grid;grid-template-columns:minmax(76px,auto) minmax(0,1fr);gap:6px 16px;margin:0;color:var(--dsw-alias-label-tertiary);font-weight:400}
+  .dsh-balance-mini-panel .bm-details dt{margin:0}
+  .dsh-balance-mini-panel .bm-details dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}
+  .dsh-balance-mini-panel .bm-rule{height:1px;background:var(--dsw-alias-separator-primary);margin:8px 0}
+  .dsh-balance-mini-panel .bm-refresh{font:inherit;color:var(--dsw-alias-label-secondary);background:0 0;border:0;padding:0;cursor:pointer;transition:color .12s}
+  .dsh-balance-mini-panel .bm-refresh:hover:not(:disabled){color:var(--dsw-alias-label-primary)}
+  .dsh-balance-mini-panel .bm-refresh.busy,.dsh-balance-mini-panel .bm-refresh:disabled{color:var(--dsw-alias-label-tertiary);cursor:default}
+</style>
+</head>
+<body>
+
+<h1>dsh-balance-mini — 样式预览</h1>
+<p class="sub">
+  本页 CSS 由 <code>tools/gen-preview.mjs</code> 从 <code>lib/client.js</code> 求值生成，与实机同一份定义。<br>
+  原厂 <code>StatsPills</code> 的真实 CSS（<code>.iq1doa_*</code>）也内置其中，用于并排对照。
+</p>
+
+<h2>① 实机排布：上下文圆圈 + 余额胶囊</h2>
+<div class="frame">
+  <div class="dock">
+    <span class="ctx"><span class="ring"></span><span>42%</span></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+</div>
+<p class="note">
+  三段各带标签，避免混淆，按变化速度由慢到快排列：<b>余额</b>（账户充值余额，快照）· <b>会话累计</b>（本会话建立至今的累计）· <b>本轮消耗</b>（这一句话从发问到此刻的合计，跳动最明显）。<br>
+  三个圆点同色，按<b>余额分档</b>：≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰。<br>号码段前是 5px 状态块，后两段标签前是 5px 小方点（对齐原生胶囊"每段都有图标"的节奏）。<br>数值用等宽数字，且<b>不预留最小宽度</b> —— 预留会让标签与数字之间出现空白。
+  三段<b>始终占位</b>：本轮还算不出来时显示 <code>—</code>，不整段省略 —— 避免数字左右横移（见下方 ④）。
+</p>
+
+<h2>② 与原厂胶囊并排（分隔点 / 字号 / 间距一致性）</h2>
+<div class="frame">
+  <div class="dock">
+    <span class="np_anchor"><button class="np_pill" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 12 L15.5 8.5" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+      <span class="np_label">337M tok<span class="np_sep">·</span>缓存命中 99%</span>
+    </button></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+</div>
+<p class="note">两边的分隔点应<b>大小、亮度、间距一致</b> —— 都用 <code>var(--dsw-alias-separator-primary)</code> 且 <code>margin:0 6px</code>，字号都用同一个 calc 表达式。</p>
+
+<h2>③ 点击展开的浮层</h2>
+<div class="frame">
+  <div class="dock">
+    <span class="ctx"><span class="ring"></span><span>42%</span></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button" aria-expanded="true" style="background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+  <div style="display:flex;justify-content:center;padding:4px 0 8px">
+    <div class="dsh-balance-mini-panel" style="position:static">
+      <div class="bm-head">
+        <span class="bm-head-main"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex:none;display:block"><rect x="1.5" y="3.5" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="8" r="1.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>余额</span>
+        <span class="bm-head-value">¥554.13</span>
+        <span class="bm-head-day">本日消耗 ¥1.842</span>
+      </div>
+      <div class="bm-head-rule"></div>
+      <dl class="bm-details">
+        <dt>会话累计</dt><dd>¥13.265</dd>
+        <dt>每轮平均消耗</dt><dd>¥0.158 · 84 轮</dd>
+        <dt>会话累计 token</dt><dd>4.33亿</dd>
+        <dt>会话命中缓存</dt><dd>4.31亿（99.4%）</dd>
+        <dt>本日 token</dt><dd>12.9万</dd>
+        <dt>单价（元/百万 token）</dt><dd>命中 0.02 · 未命中 1 · 输出 4</dd>
+        <dt>时段</dt><dd>空闲（非工作日或非高峰时段）</dd>
+        <dt>数据来源</dt><dd>DeepSeek 账号服务</dd>
+      </dl>
+      <div class="bm-rule"></div>
+      <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
+    </div>
+  </div>
+</div>
+<p class="note">
+  金额单位统一是「元/百万 token」，金额本身是元。<br>
+  <b>不重复官方内容</b>：token 明细（缓存命中 / 未缓存输入 / 缓存读取 / 缓存写入 / 输出）在官方「Token 用量」浮层里已有，
+  这里只给<b>成本视角</b>的三个数 —— 总量、缓存读取占比、本轮总量。<br>
+  「会话命中缓存」解释了<b>为什么成本这么低</b>：命中那部分单价 0.02，未命中的是 1，<b>差 50 倍</b>。<br>
+  单价行显示的是<b>当前时段</b>的费率（高峰翻倍），不是历史成交均价。
+</p>
+
+<h2>④ 三段始终占位（无值显示 "—"）、余额分档、异常状态</h2>
+<div class="frame">
+  <div class="dock">
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-yellow" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥42.10</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥1.084</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span></button>
+    <button class="dsh-balance-mini-chip ready lv-red" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥8.44</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥0.124</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.008</span></button>
+  </div>
+</div>
+<p class="note">正常三态：圆点颜色按余额分档（≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰）。</p>
+
+<p class="note" style="margin-top:16px">
+  <b>关键：位置必须稳定。</b>下面是同一个会话从「刚打开」到「本轮跑起来」的连续状态 ——
+  三段<b>始终存在</b>，只是无值时显示 <code>—</code>。数字不会因某段出现/消失而左右横移。
+</p>
+<div class="frame">
+  <div class="dock" style="flex-direction:column;gap:2px;align-items:center">
+    <div class="cap-note">刚打开 DSH（本轮还没开始）</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+    <div class="cap-note">本轮刚开始，基准已建立</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+    <div class="cap-note">本轮累积中</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.270</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span></button>
+    <div class="cap-note">余额查询失败（三段仍占位）</div>
+    <button class="dsh-balance-mini-chip ready lv-gray" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>余额查询失败</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+  </div>
+</div>
+<p class="note">
+  用 <code>—</code> 而不是 <code>¥0</code>：<code>¥0</code> 会被读成"本轮没花钱"，
+  而实际可能是"还算不出来"。<code>—</code> 表达"暂无数据"更准确。
+</p>
+
+<h2>⑤ 字号跟随设置：与原厂胶囊同步变化</h2>
+<p class="note">下面依次把 <code>--dsh-content-font-size-secondary</code> 设为 13 / 14 / 15px。两者都用同一个 calc 表达式且<b>不带兜底值</b>，因此始终同步。</p>
+<div class="frame">
+  <div class="dock" style="--dsh-content-font-size-secondary:13px">
+    <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 13px<span class="np_sep">·</span>对照</span></button></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+  <div class="dock" style="--dsh-content-font-size-secondary:14px">
+    <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 14px<span class="np_sep">·</span>对照</span></button></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+  <div class="dock" style="--dsh-content-font-size-secondary:15px">
+    <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 15px<span class="np_sep">·</span>对照</span></button></span>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">余额</span><span>¥554.13</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+  </div>
+</div>
+
+</body>
+</html>

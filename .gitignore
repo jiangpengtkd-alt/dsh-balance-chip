@@ -1,0 +1,26 @@
+# 依赖与构建产物
+node_modules/
+dist/
+*.tgz.tmp
+
+# 日志与临时文件
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*~
+
+# 本地探索用的一次性脚本（以 _ 开头）
+_*.mjs
+_*.cjs
+_*.py
+
+# 注意：docs/preview.html 是**生成产物但需要入库** ——
+# 它由 tools/gen-preview.mjs 从 lib/client.js 生成，是要给人看的展示页，
+# 所以不忽略（改样式后要重新生成并提交）。

@@ -1,0 +1,20 @@
+# dsh-balance-mini —— 自用极简 DeepSeek 余额卡片
+#
+# 这是插件的「激活层」：profile 组合本 bundle 时，loader 按下面的 patch 语义
+# 把插件行插进配置树。行 id = balance-mini，插件名 = 本包名，由 Node 模块
+# 解析定位到已安装的包，所以一条命令即可安装启用：
+#
+#   dsh plugin --profile desktop add <本目录>
+#
+# 之后可在 ~/.dsh/profiles/desktop/cordis.patch.yml 按 id 覆盖 config：
+#   - update:
+#       - id: balance-mini
+#         config:
+#           refreshMs: 30000
+#
+# 配置字段（都可缺省）：
+#   refreshMs  前端刷新间隔（默认 60000）
+#   timeoutMs  服务端查询超时（默认 15000）
+- insert:
+    - id: balance-mini
+      name: dsh-balance-mini
