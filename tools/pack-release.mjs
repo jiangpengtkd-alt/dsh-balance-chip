@@ -266,37 +266,59 @@ if (existsSync(tgzPath)) {
 
   // 包内文档不得再**声称** macOS / Linux 装不了。
   //
-  // ⚠️ 断言要能区分"主张"与"引用错误主张并纠正"，且**不能只扫表格行** ——
-  //     第一次修这个问题时只改了平台表，README 的**散文段落**还留着
-  //     "没有可安装的 DSH 宿主"，同一份发布物自相矛盾，而当时的断言只 filter
-  //     表格行，结构上就抓不到（审计方指出后才补上）。
+  // 判据演进（每一版都是被实际漏检逼出来的，留在这里避免退回）：
+  //   ① 全文件 grep            → 把"更正引述"判失败（CI 抓到）
+  //   ② 只扫表格行             → 漏掉散文里的结论（审计抓到）
+  //   ③ 表格 + 散文**措辞白名单** → 同义改写全部绕过（审计用变异测试证明：
+  //                              "待官方发布宿主后可用"、"官方无 macOS 构建" 都能过，
+  //                              而前者当时**就写在仓库里**）
+  //   ④ 现在：表格用语义、散文也用语义，两者强度对等
   //
-  // 判据（两次误报换来的）：
-  //   · 表格行 → 出现 `macOS` + `❌` 即违规（表格里不会放更正说明）
-  //   · 散文   → 命中关键词即违规，但**跳过引用块**（以 `>` 开头）
-  // 更正说明一律写在 `>` 引用块里（这是本仓库的既有写法），正文主张不会。
+  // ⚠️ 教训：**白名单式判据等于没有判据** —— 它只能防止"把原句改回去"，
+  //    防不住任何换个说法的等价结论。判据要盯**语义**（平台名 + 否定词共现），
+  //    而不是盯**我当初碰巧写的那几个字**。
+  //
+  // 例外：`>` 引用块豁免 —— 更正说明一律写在引用块里（本仓库既有写法），
+  //      正文主张不会。这样"引用旧结论并纠正"不会被误判。
+  // ⚠️ 否定模式也要写成"语义"而不是"枚举动词"。
+  //    第一版写了 `无法安装`，结果 `无法使用` 就漏了（变异测试当场抓到）——
+  //    同一个坑换个位置又踩了一次。所以这里用 `无法\S{0,4}` 覆盖任意动词，
+  //    而不是逐个列 "安装/使用/运行/…"。
+  const NEGATION = new RegExp(
+    [
+      "装不了",
+      "不能装",
+      "无法\\S{0,4}", // 无法安装 / 无法使用 / 无法运行 …
+      "不可用",
+      "不支持",
+      "尚未",
+      "未发布",
+      "没有可安装",
+      "无\\s?(?:macOS|Mac|Linux)",
+      "(?:macOS|Mac|Linux)[^。\\n]{0,12}(?:没有|无|不存在)",
+      "待[^。\\n]{0,8}后可用",
+      "尚未提供",
+      "暂不可",
+      "不支持安装",
+    ].join("|"),
+  );
+  const PLATFORM = /macOS|Linux|darwin|Mac 用户|Mac 上/;
   for (const f of ["README.md", "INSTALL.md", "QUICKSTART.md"]) {
     const p = existsSync(join(P, f)) ? join(P, f) : join(ROOT, f);
     if (!existsSync(p)) continue;
     const lines = readFileSync(p, "utf8").split("\n");
 
+    // 表格：语义判据（平台名 + ❌）
     const badRows = lines.filter((l) => l.trim().startsWith("|") && /macOS/i.test(l) && /❌/.test(l));
-
-    const KEYWORDS = [
-      /只有 Windows x64 一个构建/,
-      /只针对 win32-x64 构建/,
-      /没有可安装的 DSH 宿主/,
-      /macOS \/ Linux 上暂时/,
-      /一旦官方发布 macOS/,
-      /只有这一个官方构建/,
-    ];
+    // 正文：语义判据（平台名 + 否定词共现），跳过引用块
     const badProse = lines.filter((l) => {
-      if (l.trim().startsWith(">")) return false; // 引用块 = 更正说明，跳过
-      return KEYWORDS.some((re) => re.test(l));
+      if (l.trim().startsWith(">")) return false; // 引用块 = 更正说明
+      if (l.trim().startsWith("```")) return false; // 代码块里的命令别误判
+      return PLATFORM.test(l) && NEGATION.test(l);
     });
 
     ck(badRows.length === 0 && badProse.length === 0,
-      `${f} 不再声称 macOS/Linux 装不了（表格 + 散文，跳过引用块）`,
+      `${f} 不再声称 macOS/Linux 装不了（语义判据 + 引用块豁免）`,
       (badRows[0] ?? badProse[0] ?? "").trim().slice(0, 70));
   }
   execFileSync(process.execPath, ["-e", `require('node:fs').rmSync(${JSON.stringify(tmp)},{recursive:true,force:true})`]);

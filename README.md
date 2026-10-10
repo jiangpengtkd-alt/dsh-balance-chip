@@ -44,7 +44,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.10.5.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.10.6.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -91,8 +91,12 @@ node tools/gen-preview.mjs      # 19 项  预览页自检
 证据、根因、修法，以及**我为什么会漏掉它们**。
 
 其中最值得看的一条：某次修复和对应的断言**犯了同一个盲区**
-（都只覆盖平台表格、漏掉散文段落），于是同一份发布包里
-README 说"macOS 装不了"、INSTALL 说"macOS 实测可用" —— 而测试全绿。
+（都只覆盖平台表格、漏掉散文段落），于是同一份发布包里两份文档的平台结论
+互相矛盾 —— 而测试全绿。
+
+> 那条矛盾的原文是：README 写"macOS 装不了"、INSTALL 写"macOS 实测可用"。
+> 放在引用块里是因为它**是错的**，只是被引来作说明；
+> `tools/pack-release.mjs` 的文档断言以"是否在引用块内"区分主张与更正说明。
 
 ## 项目结构
 
@@ -177,10 +181,10 @@ C:\Users\<user>\.dsh\profiles\desktop\
 
 ```bash
 # macOS / Linux
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.5.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.6.tgz
 
 # Windows (PowerShell)
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.5.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.6.tgz"
 ```
 
 把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。
