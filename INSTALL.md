@@ -87,6 +87,36 @@ dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
 
 装完**重启 DSH**。不需要联网。
 
+### ⚠️ 从仓库的 `releases/` 直接安装会踩的坑
+
+如果你是按 `dsh plugin add ./releases/dsh-balance-mini-<版本>.tgz` 装的，
+profile 里记的是**那个路径**。而 `releases/` 里**只保留当前版本**（打包脚本会清掉旧产物），
+所以下次 `git pull` 把旧 tgz 删掉之后，pnpm 在解析现有依赖时会直接 ENOENT：
+
+```
+[ENOENT] no such file or directory, open '…/releases/dsh-balance-mini-0.10.5.tgz'
+dsh: plugin command failed    [exit=254]
+```
+
+**结果：新版本也装不进去**，因为它在解析旧依赖时就挂了。
+
+**正确做法**：装之前先把 tgz 拷到**不随 `git pull` 变动**的位置：
+
+```bash
+cp releases/dsh-balance-mini-<版本>.tgz ~/.dsh/plugins/
+dsh plugin --profile desktop add ~/.dsh/plugins/dsh-balance-mini-<版本>.tgz
+```
+
+**已经踩了的话，两步恢复**：
+
+```bash
+dsh plugin --profile desktop remove dsh-balance-mini   # 摘掉悬空依赖
+dsh plugin --profile desktop add <新 tgz 的稳定路径>   # 再装
+```
+
+> 顺带记一笔行为：`remove` 会**同时**从 profile 的 `dsh.profile.bundles` 里移除条目，
+> `add` 会加回去 —— 这两步是对称的，不用手工改配置文件。
+
 ### 方式 2：拷目录 + 一条命令 —— 想改代码时用
 
 `add` 接受本地目录，DSH 会在 profile 里建一个指向它的链接，

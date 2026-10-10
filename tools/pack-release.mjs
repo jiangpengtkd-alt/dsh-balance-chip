@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import zlib from "node:zlib";
+import { scanDoc } from "./doc-rules.mjs";
 
 /** 跨 Node 版本安全的删除（rmSync 在 Node 14.14+ 才有，这里只是给个名字好读）。 */
 const rmSyncCompat = (p) => rmSync(p, { force: true });
@@ -37,6 +38,7 @@ const RELEASES = join(ROOT, "releases");
 
 let pass = 0;
 let fail = 0;
+
 const ck = (ok, label, extra) => {
   if (ok) pass += 1; else fail += 1;
   console.log(`  ${ok ? "\u2713" : "\u2717"}  ${label}${extra ? "   " + extra : ""}`);
@@ -258,6 +260,22 @@ if (existsSync(tgzPath)) {
     ck(a === b, `tgz 内 ${f} 与仓库逐字节一致`);
   }
 
+  // ⚠️ files 清单必须覆盖 tools/ 下的**每一个**脚本。
+  //    踩过：0.10.4 新增了 pack-release.mjs 但忘了加进 files，
+  //    于是它没进 tgz —— 而当时的断言只查了固定几个文件，没核对清单本身，
+  //    所以两份产物不一致了好几个版本都没被发现。
+  {
+    const declared = new Set((JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).files) || []);
+    const scripts = readdirSync(join(ROOT, "tools")).filter((f) => f.endsWith(".mjs"));
+    const missing = scripts.filter((f) => !declared.has("tools/" + f));
+    ck(missing.length === 0, "package.json 的 files 覆盖 tools/ 下所有脚本",
+      missing.length ? "缺: " + missing.join(", ") : scripts.length + " 个脚本");
+    const inTgz = new Set(readdirSync(join(P, "tools")));
+    const notPacked = scripts.filter((f) => !inTgz.has(f));
+    ck(notPacked.length === 0, "tgz 内实际包含 tools/ 下所有脚本",
+      notPacked.length ? "缺: " + notPacked.join(", ") : "");
+  }
+
   // ⚠️ 这条就是问题 6：包内 README 曾落后一个版本，照它操作会找不到文件
   const pkgReadme = readFileSync(join(P, "README.md"), "utf8");
   const refs = [...new Set([...pkgReadme.matchAll(/dsh-balance-mini-(\d+\.\d+\.\d+)\.tgz/g)].map((m) => m[1]))];
@@ -280,63 +298,31 @@ if (existsSync(tgzPath)) {
   //
   // 例外：`>` 引用块豁免 —— 更正说明一律写在引用块里（本仓库既有写法），
   //      正文主张不会。这样"引用旧结论并纠正"不会被误判。
-  // ⚠️ 否定模式也要写成"语义"而不是"枚举动词"。
-  //    第一版写了 `无法安装`，结果 `无法使用` 就漏了（变异测试当场抓到）——
-  //    同一个坑换个位置又踩了一次。所以这里用 `无法\S{0,4}` 覆盖任意动词，
-  //    而不是逐个列 "安装/使用/运行/…"。
-  const NEGATION = new RegExp(
-    [
-      "装不了",
-      "不能装",
-      "无法\\S{0,4}", // 无法安装 / 无法使用 / 无法运行 …
-      "不可用",
-      "不支持",
-      "尚未",
-      "未发布",
-      "没有可安装",
-      "无\\s?(?:macOS|Mac|Linux)",
-      "(?:macOS|Mac|Linux)[^。\\n]{0,12}(?:没有|无|不存在)",
-      "待[^。\\n]{0,8}后可用",
-      "尚未提供",
-      "暂不可",
-      "不支持安装",
-    ].join("|"),
-  );
-  const PLATFORM = /macOS|Linux|darwin|Mac 用户|Mac 上/;
-  // 判据的**单一来源**就在这里。CI 不再内联一份重复实现 ——
-  // 曾经两处并存，分叉后 CI 把 CHANGELOG / docs/audits 里"变异测试用例表格"
-  // 中列出的**示例字符串**当成了违规（`| 散文加「官方无 macOS 构建…」 | ✓ 漏掉 |`）。
-  // 教训与本节修的那条同源：**判据存在两处，就会有两套行为。**
+  // ── 文档判据 ──
+  //
+  // ⚠️ 判据本体在 `tools/doc-rules.mjs`，**只有那一份**。
+  //     曾经同时存在于本文件与 CI workflow 的内联 grep 里，分叉后 CI 误报 ——
+  //     "判据存在两处，就会有两套行为"。CI 那份已删，本文件也只调用不重写。
+  //     判据的回归测试见 `tools/doc-rule-fixtures.mjs`。
   //
   // ⚠️ 扫描范围要分层，否则会把"记录错误"本身判成"主张错误"：
   //
   //   · 面向用户的文档（README / INSTALL / QUICKSTART）
   //       → 表格 + 正文都查。这些文档必须**只讲对的**。
   //   · 变更记录与审计档案（CHANGELOG / docs/audits）
-  //       → **只查表格**。它们的天职就是复述曾经写错的话
-  //         （"### H… INSTALL.md 仍在说 macOS「待…」" 这种标题必然命中否定词，
-  //          但那是在**描述**问题，不是**主张**它）。
-  //         文件级豁免太粗（会放过真问题），表格级判据够用且无歧义。
+  //       → **只查表格、且表格也不查** —— 见下方说明。
+  //         这两份文件的天职就是复述曾经写错的话：正文里有
+  //         "### H… 仍在说 macOS「待…」" 这种标题（描述问题），
+  //         表格里有 `| 把 README 的 macOS 行改成 ❌ | 抓 |` 这种**测试用例**。
+  //         任何形式的扫描都只能靠"恰好没写那个符号"来躲 —— 而我们每轮都在归档。
+  //         所以这两份**整体跳过**，它们不是发布给用户的说明文档。
   const USER_FACING = ["README.md", "INSTALL.md", "QUICKSTART.md"];
-  const RECORDS = ["CHANGELOG.md", "docs/audits/README.md"];
-  for (const f of [...USER_FACING, ...RECORDS]) {
+  for (const f of USER_FACING) {
     const p = existsSync(join(P, f)) ? join(P, f) : join(ROOT, f);
     if (!existsSync(p)) continue;
-    const proseChecked = USER_FACING.includes(f);
-    const lines = readFileSync(p, "utf8").split("\n");
-
-    let inFence = false;
-    const offenders = [];
-    for (const l of lines) {
-      if (l.trim().startsWith("```")) { inFence = !inFence; continue; }
-      if (inFence) continue;                        // 代码块里出现的示例不算
-      if (l.trim().startsWith(">")) continue;        // 引用块 = 更正说明
-      const isRow = l.trim().startsWith("|");
-      if (isRow && /macOS/i.test(l) && /❌/.test(l)) { offenders.push(l); continue; }
-      if (proseChecked && PLATFORM.test(l) && NEGATION.test(l)) offenders.push(l);
-    }
+    const offenders = scanDoc(readFileSync(p, "utf8"), { checkProse: true });
     ck(offenders.length === 0,
-      `${f} 的${proseChecked ? "表格与正文" : "表格"}不再声称 macOS/Linux 装不了`,
+      `${f} 不再声称 macOS/Linux 装不了（语义判据 + 引用块/代码块豁免）`,
       offenders.length ? offenders[0].trim().slice(0, 70) : "");
   }
   execFileSync(process.execPath, ["-e", `require('node:fs').rmSync(${JSON.stringify(tmp)},{recursive:true,force:true})`]);

@@ -58,24 +58,13 @@ jobs:
       - name: 发布产物与 HEAD 一致
         run: node tools/pack-release.mjs --check
 
-      # 只在一个 Node 版本上跑一次（与 Node 版本无关）
+      # ⚠️ 这里**不再内联任何文档/产物判据**。
       #
-      # ⚠️ 这里**曾经内联了一份文档一致性 grep**，与 tools/pack-release.mjs 里那份**重复**。
-      # 两者分叉后 CI 开始误报：把 CHANGELOG 与 docs/audits 里"变异测试用例表格"
-      # 中列出的示例字符串（`| 散文加「官方无 macOS 构建…」 | ✓ 漏掉 |`）当成了违规。
+      # 历史上这里曾有一份文档一致性 grep，与 tools/pack-release.mjs 里那份重复，
+      # 分叉后 CI 开始误报（把 CHANGELOG / docs/audits 里"变异测试用例表格"中
+      # 列出的示例字符串当成了违规）。另有一份 zip 反斜杠判据同样是重复的。
       #
-      # 教训与 0.10.6 修的那条同源：**判据存在两处，就会有两套行为。**
-      # 现在只保留单一来源 —— 全部交给 `pack-release.mjs --check`
-      # （上一步已经跑过，它内含语义判据 + 引用块豁免 + 正文/表格区分）。
-      - name: zip 产物不得含反斜杠条目
-        if: matrix.node-version == 24
-        run: |
-          fail=0
-          for z in releases/*.zip; do
-            [ -e "$z" ] || continue
-            if unzip -Z1 "$z" | grep -q '\\'; then
-              echo "::error::$z 的条目名含反斜杠，非 Windows 解压会丢失目录结构"
-              fail=1
-            fi
-          done
-          exit $fail
+      # **判据存在两处，就会有两套行为。** 两条内联检查都已删除，统一由
+      # `node tools/pack-release.mjs --check`（上一步已跑）提供 ——
+      # 它内含 zip 条目名检查、zip 内容比对、文档语义判据。
+      # 判据本体在 tools/doc-rules.mjs，回归测试在 tools/doc-rule-fixtures.mjs。
