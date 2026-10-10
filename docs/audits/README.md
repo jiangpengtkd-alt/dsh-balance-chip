@@ -1,0 +1,212 @@
+# 独立审计记录
+
+这个目录保存**外部独立审计**的结果与处理过程，供以后追溯。
+
+为什么要留档：这些审计抓到的多数问题**自测发现不了**——
+不是测试不够多，而是**修复和断言犯了同一个盲区**。
+把它们连同"我是怎么错、怎么发现的"一起记下来，比只留结论有用。
+
+---
+
+## 两轮审计概览
+
+| 轮次 | 对象 | 环境 | 报出 | 复核属实 | 处理 |
+|---|---|---|---|---|---|
+| 第一轮 | `main @ 65315ad`（0.10.3） | macOS darwin-arm64 | 11 条 | **8 条** | commit `0b0b01f` → 0.10.4 |
+| 第二轮 | `main @ d4950e4`（0.10.4） | macOS darwin-arm64 | 复核 11 条 + 新报 5 条 | **5 条全属实** | commit `40308b1` → 0.10.5 |
+
+审计方法：浅克隆到本机、**字节级比对**、`ditto` 实测解压、
+**把新断言自己跑一遍**、以及**向断言注入缺陷验证其有效性**（变异测试）。
+
+> 这个方法值得沿用：审计方不只报问题，还验证了"我加的断言是否真的能拦住"。
+> 第二轮正是靠这个方法发现「断言只扫表格行、漏掉散文」这个**结构性缺口**。
+
+---
+
+## 第一轮（0.10.4）
+
+### 高危
+
+**① zip 用 Windows 反斜杠写条目名 → 非 Windows 解压后目录结构丢失**
+
+- 证据：`releases/*.zip` 的 19 个条目**全部含 `\`、0 个含 `/`**；
+  `ditto -x -k` 解压得到 19 个平铺文件、**0 层子目录**。
+- 根因：zip 是用 PowerShell 的 `Compress-Archive` 打的，它按 Windows 习惯写条目名。
+  （字节级验证：中央目录里读出来就是 `"plugin\\README.md"`。）
+- 影响：从 **0.1.1** 就存在，只因只有非 Windows 用户才会撞上，长期未被发现。
+- 修法：新增 `tools/pack-release.mjs`，**手写 zip 条目**（自算 CRC32 + deflate），
+  名称一律 POSIX 正斜杠，写入时直接断言不含反斜杠。
+
+**② 文档声称"macOS 装不了"与事实不符**
+
+- 反证：审计者在 darwin-arm64 上装通，`/balance-mini/fetch` 返回 200 与真实余额。
+- 我的错误：只查了**本机安装实例**的构建元数据（`platform: win32`、
+  更新地址 `feeds/win-x64/`）就推断成**官方平台列表**。
+- 修法：平台表改 ✅ 并列出实测组合。
+
+**③ `快速上手.md` 传播已被撤回的说法，且不在版本控制里**
+
+- `git ls-files | grep -c 快速上手` → **0**。它是打包时临时拼的，
+  无法被 review / diff / CI 发现，成了"野生文档"。
+- 修法：纳入仓库为 `QUICKSTART.md`，由打包脚本复制成 zip 内的 `快速上手.md`。
+
+### 中危
+
+**④ README「不联网」与代码不符** —— `lib/index.js` 有
+`fetch(\`${baseURL}/user/balance\`)`，账号服务不可用时会回退到 `api.deepseek.com`
+并带上本机 API Key。这是**隐私承诺层面的表述不准**，比普通文档错误严重。
+已改为有条件表述 + 新增「它联不联网」一节。
+
+**⑤ 节假日数据缺失时界面无提示** —— 表只到 2026，未收录年份**所有法定节假日**
+被按工作日高峰计价（费率约 2 倍）且不报错；原先只把措辞从"非工作日或非高峰时段"
+悄悄换成"非高峰时段"，两者读起来几乎一样。已新增「节假日数据」行显式警示。
+
+**⑥ 包内 README 落后一个版本** —— 照它操作会去找不存在的 tgz。
+
+**⑦ CI 不校验 `releases/`** —— 上面 ① 和 ⑥ 都能被一条廉价断言拦住。
+
+### 低 / 建议
+
+⑧ 版本徽章停在旧版（已去掉会漂移的字段）；
+⑨ `INSTALL.md` 缺 Node 要求；
+⑩ 37 个版本只有 2 个提交（从 0.10.4 起一版一提交）；
+⑪ 建议加 Origin 校验 —— **实测无绕过**（`127.0.0.1.evil.com` 等均 403、
+响应无 CORS 头），剩余影响仅"本机任意页面可触发一次查询"，属噪声级别，记录在案不加。
+
+### 审计方确认无问题的项
+
+客户端是经典脚本而非 ESM（能用 `new Function("window", …)` 真模拟加载器）、
+发布产物与 HEAD 逐字节一致、`preview.html` 同步、五套测试在 macOS 上全过、
+计价与本机时钟自洽、回环校验无绕过、零依赖、`engines.node` 与 zstd 实际要求一致。
+
+---
+
+## 第二轮（0.10.5）
+
+### A（中）README 的**散文段落**还留着"macOS 装不了"
+
+0.10.4 只改了平台**表格**，同一份 README 的散文仍写着
+"目前只有 Windows x64 一个构建 / 没有可安装的 DSH 宿主"。
+
+**于是同一个发布包自相矛盾**：README 说没宿主，`INSTALL.md` 与 `QUICKSTART.md`
+说"macOS ✅ 实机验证"。已确认这两行打进了 0.10.4 的 tgz 与 zip。
+
+**更值得记的是：当时的新断言结构上抓不到它。**
+`pack-release.mjs` 与 CI 都只 filter 表格行（这个限定本身是对的，
+为了不误伤"更正引述"），而这段结论在散文里 —— **修复和断言犯了同一个盲区**。
+
+判据迭代三轮才稳：
+
+| 版本 | 判据 | 结果 |
+|---|---|---|
+| 1 | 全文件 grep | 把"更正引述"判失败（**CI 抓到**） |
+| 2 | 只扫表格行 | 漏掉散文里的结论（**审计抓到**） |
+| 3 | 表格行 + 散文关键词，**跳过 `>` 引用块** | ✓ |
+
+第三版依据的是"更正说明一律写在引用块里、正文主张不会"这个**结构性特征**，
+比堆关键词可靠。
+
+### B（中）`pack-release.mjs` 在 macOS / Linux 上打不了包
+
+找 npm 只试了三个位置，POSIX 缺了 `lib` 那一层：
+
+```
+<prefix>/node_modules/npm/bin/npm-cli.js       ← 只试了这个（Windows 布局）
+<prefix>/lib/node_modules/npm/bin/npm-cli.js   ← POSIX 实际在这里
+```
+
+**这个为解决 zip 跨平台问题而写的工具，自己只能在 Windows 上跑。**
+而 `--check` 不依赖 npm，所以 CI 一直绿，掩盖了缺口。
+
+### C（中）路径含空格就全挂
+
+```js
+const ROOT = new URL("..", import.meta.url).pathname.replace(...)  // ✗ 不解码
+const ROOT = fileURLToPath(new URL("..", import.meta.url));        // ✓
+```
+
+`pathname` 不做百分号解码，空格变 `%20`，所有 `readFileSync` 直接 ENOENT。
+
+**这条尤其要紧**：DSH 自己就装在 `/Applications/DeepSeek Harness.app` 这种路径里。
+已实测：带空格路径下 `--check` 29/29、退出码 0。
+
+### D（低）zip 只校验条目名，没校验内容
+
+原来对 tgz 做了逐字节比对，对 zip 只查结构。于是
+**"只重打了 tgz、忘了重打 zip"这种情况 `--check` 依然全绿**，而 zip 里是旧代码。
+
+已新增 10 条内容断言，校验总数 19 → 29。
+
+### E（低）QUICKSTART 按旧包结构写
+
+新 zip 已无 `plugin/` 层（实测含 `plugin/` 的条目 0 个），文档里仍有 6 处引用。
+
+### F（低）`package.json` 描述与 CHANGELOG 说法不符
+
+上一版 CHANGELOG 声称"描述句同步修正"，实际只改了版本号。
+`credentials never leave the machine` 按字面不成立（兜底会把 API Key 发给
+`api.deepseek.com`）。这次真改了。
+
+### G（低）每版打 tag
+
+从 `v0.10.5` 起执行。
+
+---
+
+## 变异测试：证明断言不是摆设
+
+判据迭代三次说明一件事：**断言存在 ≠ 断言有效**。
+所以每条关键断言都注入一次缺陷验证：
+
+| 注入的缺陷 | 命中 | 轮次 |
+|---|---|---|
+| 把缺陷注回换轮基准（`turnBase` 不重置） | ✓ `第二次开新轮：本轮消耗 ≈ 0` | 0.10.0 |
+| 删掉胶囊的 `ready` 类 | ✓ `胶囊带 ready 类` | 0.10.0 |
+| 删掉金额的尾随零清理 | ✓ `金额不留尾随零` | 0.10.0 |
+| 标签与数值错配 | ✓ `标签恰好出现一次` | 0.10.0 |
+| 把"没有可安装的 DSH 宿主"注回 README 散文 | ✓ 散文断言 | 0.10.5 |
+| 只重打 tgz、不重打 zip | ✓ `zip 内 README.md 与仓库逐字节一致` | 0.10.5 |
+| 把 zip 条目名改回反斜杠 | ✓ `不含反斜杠` | 0.10.5 |
+
+---
+
+## 我在这两轮里犯的错，有个共同模式
+
+| 表现 | 根因 |
+|---|---|
+| 引用 `download.deepseek.com/...` 并声称"实测 200" | URL 是猜的，没验证就写进文档 |
+| 断言"官方只有 win32 构建、macOS 装不了" | 把**本机实例**的配置当成**官方平台列表** |
+| 修表格漏散文，且断言恰好只覆盖表格 | **修复与断言同一盲区** |
+| 跨平台工具按 Windows 布局找 npm / 手写 `pathname` | 只在 Windows 上测过 |
+
+**共同点：把"我这一台机器上的观察"当成"普遍事实"。**
+
+对应的做法：**跨平台的东西必须在目标平台实测**，而不是靠推断；
+达不到时，就在文档里写明"仅在某平台验证过"，不要写死结论。
+
+---
+
+## 复现命令
+
+```bash
+gh repo clone jiangpengtkd-alt/dsh-balance-mini && cd dsh-balance-mini
+
+# zip 条目名（应为 0 反斜杠）
+python3 -c "import zipfile;z=zipfile.ZipFile('releases/dsh-balance-mini-0.10.5.zip');\
+n=z.namelist();print('反斜杠',len([x for x in n if chr(92) in x]),'/',len(n))"
+ditto -x -k releases/dsh-balance-mini-0.10.5.zip /tmp/zt && find /tmp/zt -type d
+
+# 产物自校验（29 项）
+node tools/pack-release.mjs --check
+
+# 带空格路径（DSH 自身的安装路径形态）
+mkdir -p "/tmp/pkg space" && cp -R . "/tmp/pkg space/repo" && cd "/tmp/pkg space/repo" \
+  && node tools/pack-release.mjs --check
+
+# 平台结论在表格与散文里都不该互相矛盾
+grep -n "macOS" README.md INSTALL.md QUICKSTART.md
+
+# 五套测试
+node tools/selftest.mjs && node tools/render-test.mjs . \
+  && node tools/heartbeat-test.mjs . && node tools/refresh-test.mjs .
+```

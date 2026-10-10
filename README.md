@@ -81,6 +81,19 @@ node tools/gen-preview.mjs      # 19 项  预览页自检
 > 就是靠一条这样的断言才被抓住的，并用**变异测试**验证过"把缺陷注回去测试确实会失败"。
 > 详见 [CHANGELOG](./CHANGELOG.md) 的 0.10.0 与 0.10.2。
 
+## 独立审计记录
+
+这个项目经历过**两轮外部独立审计**（在 macOS 上做：浅克隆 + 字节级比对 +
+`ditto` 实测解压 + 向断言注入缺陷验证其有效性），共报出 16 条问题，
+绝大多数**自测发现不了**。
+
+完整记录见 **[docs/audits/](./docs/audits/README.md)** —— 包含每条问题的
+证据、根因、修法，以及**我为什么会漏掉它们**。
+
+其中最值得看的一条：某次修复和对应的断言**犯了同一个盲区**
+（都只覆盖平台表格、漏掉散文段落），于是同一份发布包里
+README 说"macOS 装不了"、INSTALL 说"macOS 实测可用" —— 而测试全绿。
+
 ## 项目结构
 
 ```
@@ -88,9 +101,11 @@ lib/
   client.js        浏览器端：胶囊 + 浮层（手写 createElement，无构建步骤）
   index.js         host 端：余额读取、token 计费、本日跨会话扫描
   holidays.js      法定节假日表（唯一的年度维护点）
-tools/             五套测试 + 预览生成器
+tools/             五套测试 + 打包脚本 pack-release.mjs + 预览生成器
 docs/preview.html  样式预览（由 gen-preview.mjs 生成，需与源码同步）
-releases/          发布包（.tgz 安装包 + .zip 完整包）
+docs/audits/       两轮独立审计的完整记录（问题、证据、根因、修法）
+releases/          发布包（.tgz 安装包 + .zip 完整包，每个版本一个 tag）
+QUICKSTART.md      中文上手（含每个数字的定义、联网边界、年度维护）
 CHANGELOG.md       完整版本历史（含每个 bug 的根因与修法）
 INSTALL.md         安装与排查
 ```
