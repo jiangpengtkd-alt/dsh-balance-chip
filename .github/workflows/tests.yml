@@ -63,9 +63,14 @@ jobs:
         if: matrix.node-version == 24
         run: |
           fail=0
+          # ⚠️ 只查**表格行**（以 `|` 开头）。
+          # 这些字符串在"撤回说明"里必须能合法出现 —— 例如
+          # 「早先的版本写过"macOS ❌ 官方无 macOS 构建" —— 那是错的」。
+          # 第一版断言用了全文件 grep，结果把更正段落自己判失败了（CI 抓到）。
+          # 真正的平台结论一定写在表格里，所以限定表格行就能区分"主张"与"引述错误主张"。
           for pat in "官方无 macOS 构建" "只有这一个官方构建" "只提供 .win-x64. 一个 feed"; do
-            if grep -rInE "$pat" --include="*.md" .; then
-              echo "::error::文档里出现了已被实测推翻的结论：$pat"
+            if grep -rInE "^[[:space:]]*\|.*($pat)" --include="*.md" .; then
+              echo "::error::平台表里出现了已被实测推翻的结论：$pat"
               fail=1
             fi
           done
