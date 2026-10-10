@@ -2,6 +2,35 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.10.3
+
+修正 **`engines.node` 声明错误** —— 由 CI 抓到。
+
+### 问题
+
+`package.json` 原本写着 `"node": ">=20"`，但 host 端用 `node:zlib` 的
+`zstdDecompressSync` 解压会话日志，**该 API 自 Node 22.15.0 起才提供**。
+
+CI 矩阵里跟着写了 `20`，于是第一次推送就失败：
+
+```
+Node.js v20.20.2
+SyntaxError: The requested module 'node:zlib' does not provide an export named 'zstdDecompressSync'
+```
+
+本机是 Node 22.22.2、DSH 桌面版内置 Node 24.18.1，所以本地怎么跑都是绿的 ——
+**只有 CI 换了个 Node 版本才暴露**。这正是把 CI 一起建起来的价值。
+
+### 改动
+
+| 项 | 修正前 | 修正后 |
+|---|---|---|
+| `package.json` 的 `engines.node` | `>=20`（错，会误导） | `>=22.15.0` |
+| CI 矩阵 | `[20, 22, 24]` | `[22, 24]` |
+| README | 未提运行环境要求 | 明确写 Node ≥ 22.15.0 及原因 |
+
+---
+
 ## 0.10.2
 
 「↻ 立即刷新」**时灵时不灵** —— 你问的这个问题确实有 bug。

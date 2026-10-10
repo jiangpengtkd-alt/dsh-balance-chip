@@ -15,8 +15,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 20 是 package.json 里 engines 的下限；24 是内置 zstd 的最低版本
-        node-version: [20, 22, 24]
+        # ⚠️ 22 是 package.json 里 engines 的下限所在大版本，24 是当前 DSH 宿主所用版本。
+        # 原本还跑了 20 —— 那是**错的**：node:zlib 的 zstdDecompressSync 需要 Node 22.15.0 起，
+        # 20 上连 import 都失败。CI 抓到后才修正了 engines 声明。
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
 

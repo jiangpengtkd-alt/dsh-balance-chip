@@ -39,7 +39,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.10.2.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.10.3.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -55,7 +55,10 @@ node tools/gen-preview.mjs      # 生成 docs/preview.html
 
 ## 测试
 
-五套测试全是纯 Node、零依赖、**不联网**，也不用启动 DSH：
+五套测试全是纯 Node、零依赖、**不联网**，也不用启动 DSH。
+
+> **运行环境要求 Node ≥ 22.15.0** —— host 端用 `node:zlib` 的 `zstdDecompressSync`
+> 解压会话日志，该 API 自 Node 22.15.0 起提供。（DSH 桌面版内置的是 Node 24，满足。）
 
 ```bash
 node tools/selftest.mjs         # 57 项  host 端到端（余额、计费、回环校验、换轮基准）
@@ -65,7 +68,7 @@ node tools/refresh-test.mjs .   # 13 项  「立即刷新」的排队与补发
 node tools/gen-preview.mjs      # 19 项  预览页自检
 ```
 
-退出码 0 即全部通过。CI 在 Node 20 / 22 / 24 上跑（[.github/workflows/tests.yml](./.github/workflows/tests.yml)）。
+退出码 0 即全部通过。CI 在 Node 22 / 24 上跑（[.github/workflows/tests.yml](./.github/workflows/tests.yml)）。
 
 > ⚠️ 测试里刻意放了几条**只有实现正确时才成立**的等式断言
 > （例如"第二次开新轮时本轮消耗 ≈ 0 且小于会话累计"）。
@@ -140,7 +143,7 @@ C:\Users\<user>\.dsh\profiles\desktop\
 一旦官方发布 macOS 或 Linux 版 DSH，本包**无需任何改动**即可安装：
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.2.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.3.tgz
 ```
 
 （把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。）
