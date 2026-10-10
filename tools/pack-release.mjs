@@ -303,23 +303,41 @@ if (existsSync(tgzPath)) {
     ].join("|"),
   );
   const PLATFORM = /macOS|Linux|darwin|Mac 用户|Mac 上/;
-  for (const f of ["README.md", "INSTALL.md", "QUICKSTART.md"]) {
+  // 判据的**单一来源**就在这里。CI 不再内联一份重复实现 ——
+  // 曾经两处并存，分叉后 CI 把 CHANGELOG / docs/audits 里"变异测试用例表格"
+  // 中列出的**示例字符串**当成了违规（`| 散文加「官方无 macOS 构建…」 | ✓ 漏掉 |`）。
+  // 教训与本节修的那条同源：**判据存在两处，就会有两套行为。**
+  //
+  // ⚠️ 扫描范围要分层，否则会把"记录错误"本身判成"主张错误"：
+  //
+  //   · 面向用户的文档（README / INSTALL / QUICKSTART）
+  //       → 表格 + 正文都查。这些文档必须**只讲对的**。
+  //   · 变更记录与审计档案（CHANGELOG / docs/audits）
+  //       → **只查表格**。它们的天职就是复述曾经写错的话
+  //         （"### H… INSTALL.md 仍在说 macOS「待…」" 这种标题必然命中否定词，
+  //          但那是在**描述**问题，不是**主张**它）。
+  //         文件级豁免太粗（会放过真问题），表格级判据够用且无歧义。
+  const USER_FACING = ["README.md", "INSTALL.md", "QUICKSTART.md"];
+  const RECORDS = ["CHANGELOG.md", "docs/audits/README.md"];
+  for (const f of [...USER_FACING, ...RECORDS]) {
     const p = existsSync(join(P, f)) ? join(P, f) : join(ROOT, f);
     if (!existsSync(p)) continue;
+    const proseChecked = USER_FACING.includes(f);
     const lines = readFileSync(p, "utf8").split("\n");
 
-    // 表格：语义判据（平台名 + ❌）
-    const badRows = lines.filter((l) => l.trim().startsWith("|") && /macOS/i.test(l) && /❌/.test(l));
-    // 正文：语义判据（平台名 + 否定词共现），跳过引用块
-    const badProse = lines.filter((l) => {
-      if (l.trim().startsWith(">")) return false; // 引用块 = 更正说明
-      if (l.trim().startsWith("```")) return false; // 代码块里的命令别误判
-      return PLATFORM.test(l) && NEGATION.test(l);
-    });
-
-    ck(badRows.length === 0 && badProse.length === 0,
-      `${f} 不再声称 macOS/Linux 装不了（语义判据 + 引用块豁免）`,
-      (badRows[0] ?? badProse[0] ?? "").trim().slice(0, 70));
+    let inFence = false;
+    const offenders = [];
+    for (const l of lines) {
+      if (l.trim().startsWith("```")) { inFence = !inFence; continue; }
+      if (inFence) continue;                        // 代码块里出现的示例不算
+      if (l.trim().startsWith(">")) continue;        // 引用块 = 更正说明
+      const isRow = l.trim().startsWith("|");
+      if (isRow && /macOS/i.test(l) && /❌/.test(l)) { offenders.push(l); continue; }
+      if (proseChecked && PLATFORM.test(l) && NEGATION.test(l)) offenders.push(l);
+    }
+    ck(offenders.length === 0,
+      `${f} 的${proseChecked ? "表格与正文" : "表格"}不再声称 macOS/Linux 装不了`,
+      offenders.length ? offenders[0].trim().slice(0, 70) : "");
   }
   execFileSync(process.execPath, ["-e", `require('node:fs').rmSync(${JSON.stringify(tmp)},{recursive:true,force:true})`]);
 }

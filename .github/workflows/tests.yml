@@ -59,22 +59,18 @@ jobs:
         run: node tools/pack-release.mjs --check
 
       # 只在一个 Node 版本上跑一次（与 Node 版本无关）
-      - name: 文档一致性（防止已被实测推翻的结论复活）
+      #
+      # ⚠️ 这里**曾经内联了一份文档一致性 grep**，与 tools/pack-release.mjs 里那份**重复**。
+      # 两者分叉后 CI 开始误报：把 CHANGELOG 与 docs/audits 里"变异测试用例表格"
+      # 中列出的示例字符串（`| 散文加「官方无 macOS 构建…」 | ✓ 漏掉 |`）当成了违规。
+      #
+      # 教训与 0.10.6 修的那条同源：**判据存在两处，就会有两套行为。**
+      # 现在只保留单一来源 —— 全部交给 `pack-release.mjs --check`
+      # （上一步已经跑过，它内含语义判据 + 引用块豁免 + 正文/表格区分）。
+      - name: zip 产物不得含反斜杠条目
         if: matrix.node-version == 24
         run: |
           fail=0
-          # ⚠️ 只查**表格行**（以 `|` 开头）。
-          # 这些字符串在"撤回说明"里必须能合法出现 —— 例如
-          # 「早先的版本写过"macOS ❌ 官方无 macOS 构建" —— 那是错的」。
-          # 第一版断言用了全文件 grep，结果把更正段落自己判失败了（CI 抓到）。
-          # 真正的平台结论一定写在表格里，所以限定表格行就能区分"主张"与"引述错误主张"。
-          for pat in "官方无 macOS 构建" "只有这一个官方构建" "只提供 .win-x64. 一个 feed"; do
-            if grep -rInE "^[[:space:]]*\|.*($pat)" --include="*.md" .; then
-              echo "::error::平台表里出现了已被实测推翻的结论：$pat"
-              fail=1
-            fi
-          done
-          # zip 产物不得含反斜杠条目（macOS/Linux 解压会丢目录结构）
           for z in releases/*.zip; do
             [ -e "$z" ] || continue
             if unzip -Z1 "$z" | grep -q '\\'; then
