@@ -266,7 +266,10 @@ if (existsSync(tgzPath)) {
   //    所以两份产物不一致了好几个版本都没被发现。
   {
     const declared = new Set((JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).files) || []);
-    const scripts = readdirSync(join(ROOT, "tools")).filter((f) => f.endsWith(".mjs"));
+    // ⚠️ 跳过 `_` 前缀的临时脚本：.gitignore 允许它们存在（本地一次性探索用），
+    //    但它们是个人草稿、不该进 files 清单 —— 不跳过的话本地 --check 会莫名变红，
+    //    而 CI 上没有这类文件所以是绿的，两边结论不一致。
+    const scripts = readdirSync(join(ROOT, "tools")).filter((f) => f.endsWith(".mjs") && !f.startsWith("_"));
     const missing = scripts.filter((f) => !declared.has("tools/" + f));
     ck(missing.length === 0, "package.json 的 files 覆盖 tools/ 下所有脚本",
       missing.length ? "缺: " + missing.join(", ") : scripts.length + " 个脚本");

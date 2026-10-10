@@ -55,6 +55,9 @@ jobs:
       #   · zip 用 Windows 反斜杠写条目名 → macOS/Linux 解压后目录结构丢失（平铺成 19 个文件）
       #   · 包内 README 落后一个版本 → 照它操作会去找一个不存在的 tgz
       # 断言写在 tools/pack-release.mjs 里，本地与 CI 共用同一套。
+      - name: 文档判据的回归测试（fixture 表）
+        run: node tools/doc-rule-fixtures.mjs
+
       - name: 发布产物与 HEAD 一致
         run: node tools/pack-release.mjs --check
 
