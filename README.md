@@ -44,7 +44,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.10.4.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.10.5.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -131,27 +131,45 @@ C:\Users\<user>\.dsh\profiles\desktop\
 - client bundle 运行在浏览器里，与操作系统无关
 - 节假日表是内置静态数据，运行时**不访问任何外部接口**
 
-**但宿主（DSH 桌面版）目前只有 Windows x64 一个构建**，依据是安装目录里的构建元数据
-`resources/app.asar` → `dsh/desktop-runtime.json`：
+**平台支持：Windows 与 macOS 均已实机验证。**
+
+| 平台 | 状态 | 已验证的组合 |
+|---|---|---|
+| **Windows x64** | ✅ 实机验证 | win32-x64 + DSH 0.2.0-rc.2（Node 24.18.1） |
+| **macOS arm64** | ✅ 实机验证 | darwin-arm64 + DSH 0.2.0-rc.2（Node 24.18.1） |
+| macOS x64 / Linux | 预期可用 | 同一份代码，未单独验证 |
+
+判断你自己的 DSH 是哪个平台，读安装目录里的 `resources/app.asar` → `dsh/desktop-runtime.json`：
 
 ```json
-{ "platform": "win32", "arch": "x64", "release": { "version": "0.2.0-rc.2" } }
+{ "platform": "darwin", "arch": "arm64", "release": { "version": "0.2.0-rc.2" } }
 ```
 
-即当前发行版**只针对 win32-x64 构建**。没有可信的公开下载源可以按平台列出可用构建，
-所以这里不再引用具体 URL —— 之前版本引用过一个更新源地址并声称"实测 200"，
-实际上那些路径**全部 404**（包括 win-x64），属于想当然写下的，不该拿来做依据。
+`platform` 在 Windows 上是 `win32`、macOS 上是 `darwin`、Linux 上是 `linux`。
 
-结论：macOS / Linux 上暂时**没有可安装的 DSH 宿主**，自然也就装不了这个插件 ——
-这不是插件的问题。官方发布对应构建后，本包**无需任何改动**即可安装。
+> ⚠️ **这一节曾经写错过两次，都记在这里以免重犯：**
+>
+> 1. 引用过一个更新源地址并声称"实测 200 / 其余 404" —— 那些 URL 是我猜的，
+>    **实测全部 404**，没有依据。
+> 2. 更严重的是据此断言"官方只有 Windows x64 一个构建、macOS 装不了"。
+>    错在把**本机安装实例**的构建元数据（`platform: win32`、更新地址 `feeds/win-x64/`）
+>    当成了**官方平台列表**。macOS 版确实存在，且已在 darwin-arm64 上实测装通、
+>    接口正常返回余额。
+>
+> 教训：一个描述「这台机器」的字段，不能拿来推断「所有平台」。
 
-一旦官方发布 macOS 或 Linux 版 DSH，本包**无需任何改动**即可安装：
+安装命令（各平台相同，只是路径写法不同）：
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.4.tgz
+# macOS / Linux
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.5.tgz
+
+# Windows (PowerShell)
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.5.tgz"
 ```
 
-（把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。）
+把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。
+运行环境要求 **Node ≥ 22.15.0**（DSH 桌面版内置的 Node 已满足），详见 [INSTALL.md](./INSTALL.md)。
 
 完整的平台说明、三种安装方式、以及"装完没反应"的排查步骤，见
 [INSTALL.md](./INSTALL.md)。

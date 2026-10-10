@@ -2,6 +2,108 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.10.5
+
+修掉独立复核指出的问题。**其中一条是我 0.10.4 修得不彻底，另两条是新写的工具自身的缺陷。**
+
+### A（中）README 的**散文段落**还留着"macOS 装不了"
+
+0.10.4 只改了平台**表格**，同一份 README 的散文里仍写着：
+
+```
+但宿主（DSH 桌面版）目前只有 Windows x64 一个构建
+结论：macOS / Linux 上暂时没有可安装的 DSH 宿主
+```
+
+于是**同一个发布包里自相矛盾**：README 说没宿主，INSTALL.md / 快速上手.md 说
+"macOS ✅ 实机验证"。已实测确认这两行打进了 0.10.4 的 tgz 与 zip。
+
+更值得记的是**当时的新断言结构上抓不到它**：`pack-release.mjs` 与 CI 都只
+filter 表格行（这个限定本身是对的，为了不误伤"更正引述"），而这段结论在散文里。
+
+修法与两次误报的教训：
+
+| 轮次 | 判据 | 结果 |
+|---|---|---|
+| 第一版 | 全文件 grep | 把"更正引述"判失败（CI 抓到） |
+| 第二版 | 只扫表格行 | 漏掉散文里的结论（本次） |
+| 第三版 | 表格行 + 散文关键词，**跳过引用块** | ✓ |
+
+"更正说明一律写在 `>` 引用块里"是本仓库的既有写法，正文主张不会 —— 用这个区分
+比堆关键词可靠。
+
+### B（中）`pack-release.mjs` 在 macOS / Linux 上打不了包
+
+找 npm 只试了三个位置，其中 POSIX 的那个少了一层 `lib`：
+
+```
+<prefix>/node_modules/npm/bin/npm-cli.js        ← 只试了这个（Windows 布局）
+<prefix>/lib/node_modules/npm/bin/npm-cli.js    ← POSIX 实际在这里，漏了
+```
+
+后果很讽刺：**这个为解决 zip 跨平台问题而写的工具，自己只能在 Windows 上跑。**
+而 `--check` 不依赖 npm，所以 CI 一直是绿的，掩盖了这个缺口。
+
+修法：补 POSIX 候选路径（含 `lib` 那一层）+ 兜底走 PATH 里的 `npm`。
+
+### C（中）路径含空格就全挂
+
+```js
+const ROOT = new URL("..", import.meta.url).pathname.replace(...)  // ✗ pathname 不解码
+const ROOT = fileURLToPath(new URL("..", import.meta.url));        // ✓
+```
+
+`pathname` 不做百分号解码，空格变成 `%20`，所有 `readFileSync` 直接 ENOENT。
+实测把仓库放到 `/tmp/pkg space` 下必然失败。
+
+**这条尤其要紧**：DSH 自己就装在 `/Applications/DeepSeek Harness.app` 这种带空格的路径里。
+
+已实测：带空格路径下 `--check` 29/29、退出码 0。
+
+### D（低）zip 只校验了条目名，没校验内容
+
+原来对 tgz 做了逐字节比对，对 zip 只查了"结构对不对"。于是
+**"只重打了 tgz、忘了重打 zip"这种情况 `--check` 依然全绿**，
+而 zip 里躺着旧代码和旧 tgz。
+
+修法：新增 10 条内容断言 —— zip 内的 `lib/*.js` / `package.json` / `README.md` /
+`INSTALL.md` 与仓库逐字节一致、内嵌 tgz 与 `releases/` 里那份一致、
+三份中文文档分别等于仓库里的 `QUICKSTART.md` / `CHANGELOG.md` / `INSTALL.md`。
+校验总数 19 → **29**。
+
+### E（低）QUICKSTART 的目录结构按旧包写的
+
+新 zip 已经没有 `plugin/` 这一层（实测含 `plugin/` 的条目 0 个），
+但文档里还有 6 处引用。已按实际结构重写。
+
+### F（低）`package.json` 描述与 CHANGELOG 说法不符
+
+0.10.4 的 CHANGELOG 声称"描述句同步修正"，实际只改了版本号 ——
+`credentials never leave the machine` 原样保留，而按字面它不成立
+（兜底路径会把 API Key 发给 `api.deepseek.com`）。这次真的改了。
+
+### 顺带：打包脚本自己清理旧产物
+
+`releases/` 里曾同时躺着两个版本的产物，而"包内 README 引用版本号正确"这类断言
+是按**当前版本**比的 —— 旧产物不会让它失败，只会留在仓库里误导人（我踩过两次）。
+现在打包时会自动清掉其它版本。
+
+### 关于 G（无 tag）
+
+从现在起**每个版本打一个 tag**（`v0.10.5`），便于与 `releases/` 里的产物对照。
+
+### 测试
+
+`pack-release --check` 19 → **29** 项。并做了**变异测试**验证三条关键断言真的有效：
+
+| 注入的缺陷 | 是否被抓 |
+|---|---|
+| 把"没有可安装的 DSH 宿主"注回 README 散文 | ✓ 命中散文断言 |
+| 只重打 tgz、不重打 zip | ✓ 命中 `zip 内 README.md 与仓库逐字节一致` |
+| 把 zip 条目名改回反斜杠 | ✓ 命中 `不含反斜杠` |
+
+---
+
 ## 0.10.4
 
 修掉一次**独立审计**（在 macOS 上做，浅克隆 + 实机验证 + 复现实验）报出的问题。

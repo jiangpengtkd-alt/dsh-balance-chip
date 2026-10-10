@@ -47,18 +47,18 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **�
 **Windows（PowerShell）**
 
 ```powershell
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.4.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.5.tgz"
 ```
 
 **macOS / Linux（bash / zsh）**
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.4.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.5.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名 —— 真实名字是 `~/.dsh/profiles/` 下的目录名。
 
-也可以直接用目录安装（免打包）：`dsh plugin --profile desktop add <解压出来的 plugin 目录>`。
+也可以直接用目录安装（免打包）：`dsh plugin --profile desktop add <解压出来的 dsh-balance-mini-<版本> 目录>`。
 
 ---
 
@@ -199,12 +199,16 @@ dsh plugin --profile desktop remove dsh-balance-mini
 
 ## 八、本包含什么
 
+解压后是一个 `dsh-balance-mini-<版本>/` 目录（结构与仓库根一致，**没有额外的 `plugin/` 层**）：
+
 | 路径 | 说明 |
 |---|---|
-| `dsh-balance-mini-0.10.4.tgz` | **安装包** |
-| `plugin/` | 插件源码（也可用目录方式安装） |
-| `plugin/README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
-| `plugin/INSTALL.md` | 安装与平台支持（含排查清单） |
-| `更新记录.md` | 完整版本历史，与 `plugin/CHANGELOG.md` 相同 |
-| `plugin/docs/preview.html` | 样式预览（由 `tools/gen-preview.mjs` 从源码生成） |
-| `plugin/tools/` | 五套测试 + 打包脚本 |
+| `dsh-balance-mini-0.10.5.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
+| `lib/` | 插件源码：`client.js`（浏览器端）、`index.js`（host 端）、`holidays.js` |
+| `README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
+| `INSTALL.md` | 安装与平台支持（含排查清单） |
+| `安装说明.md` | 同 `INSTALL.md`（打包时复制，方便直接看） |
+| `更新记录.md` | 完整版本历史，同 `CHANGELOG.md` |
+| `docs/preview.html` | 样式预览（由 `tools/gen-preview.mjs` 从源码生成） |
+| `tools/` | 五套测试 + 打包脚本 `pack-release.mjs` |
+

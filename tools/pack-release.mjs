@@ -12,13 +12,21 @@
  *   node tools/pack-release.mjs            # 打包当前版本
  *   node tools/pack-release.mjs --check    # 只校验已有产物，不重新打包（CI 用）
  */
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import zlib from "node:zlib";
 
-const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+/** 跨 Node 版本安全的删除（rmSync 在 Node 14.14+ 才有，这里只是给个名字好读）。 */
+const rmSyncCompat = (p) => rmSync(p, { force: true });
+
+// ⚠️ 必须用 fileURLToPath，不能手写 `.pathname`：
+// pathname **不做百分号解码**，路径里只要有空格就会变成 `%20`，
+// 后面所有 readFileSync 全部 ENOENT。实测仓库放到 "/tmp/pkg space" 就直接挂。
+// 这条尤其要紧 —— DSH 自己就装在 `/Applications/DeepSeek Harness.app` 这种带空格的路径里。
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CHECK_ONLY = process.argv.includes("--check");
 
 const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
@@ -133,16 +141,38 @@ if (!CHECK_ONLY) {
   mkdirSync(RELEASES, { recursive: true });
   console.log(`  打包 ${VERSION} …`);
 
+  // ⚠️ 先清掉 releases/ 里**其它版本**的产物。
+  // 不清的话，releases/ 会同时躺着 0.10.4 和 0.10.5 两份，
+  // 而"包内 README 引用的 tgz 版本号"这类断言是按**当前版本**比的 ——
+  // 旧产物不会让它失败，只会静静留在仓库里误导人（这个坑踩过两次）。
+  if (existsSync(RELEASES)) {
+    for (const f of readdirSync(RELEASES)) {
+      if (f.startsWith("dsh-balance-mini-") && f !== TGZ_NAME && f !== ZIP_NAME) {
+        rmSyncCompat(join(RELEASES, f));
+        console.log(`    （清掉旧产物 ${f}）`);
+      }
+    }
+  }
+
   // ① tgz：交给 npm pack（它写的是标准 tar，路径天然是 POSIX）
   //
-  // ⚠️ 定位 npm：`process.env.npm_execpath` 只有在"由 npm 脚本调用"时才存在，
-  // 直接 `node tools/pack-release.mjs` 时是空的。所以要按几个候选依次找。
+  // ⚠️ 定位 npm：三条路都要覆盖，否则这个"修跨平台问题"的工具自己只能在 Windows 上跑。
+  //   · npm_execpath        只有"由 npm 脚本调用"时才有，直接 node tools/… 时是空的
+  //   · Windows             全局安装是 <prefix>\node_modules\npm\bin\npm-cli.js
+  //   · macOS / Linux       全局安装是 <prefix>/lib/node_modules/npm/bin/npm-cli.js
+  //     ⚠️ POSIX 上多一层 `lib` —— 之前只试了不带 lib 的路径，导致 Mac 上直接报
+  //        "npm pack 失败"，而 --check 不依赖 npm 所以 CI 一直是绿的，掩盖了这个缺口。
+  const nodeDir = dirname(process.execPath);
   const npmCandidates = [
     process.env.npm_execpath,
-    // Windows 上 npm-cli.js 的常见位置（本机实测路径）
+    // 与本机 node 同级（Windows 布局）
+    join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
+    // POSIX 布局：<prefix>/lib/node_modules/npm/bin/npm-cli.js
+    join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    // 再往上一层（某些发行版把 npm 放在 <prefix>/lib 而 node 在 <prefix>/bin）
+    join(nodeDir, "..", "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    // 本机实测的 Windows 路径
     "F:\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
-    // 与当前 node 同级的 npm
-    join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
   ].filter(Boolean);
 
   let packed = false;
@@ -152,15 +182,28 @@ if (!CHECK_ONLY) {
     try {
       execFileSync(process.execPath, [npmCli, "pack", ROOT, "--pack-destination", RELEASES], { stdio: "pipe" });
       packed = true;
+      console.log(`    （用 ${npmCli}）`);
       break;
     } catch (e) {
       lastErr = String(e.stderr ?? e.message).slice(0, 200);
     }
   }
+
+  // 候选路径都不行时，最后试一次 PATH 里的 npm（npm_execpath 为空、且装在非标准位置时）
+  if (!packed) {
+    try {
+      execFileSync("npm", ["pack", ROOT, "--pack-destination", RELEASES], { stdio: "pipe", shell: process.platform === "win32" });
+      packed = true;
+      console.log("    （用 PATH 里的 npm）");
+    } catch (e) {
+      lastErr = String(e.stderr ?? e.message).slice(0, 200);
+    }
+  }
+
   if (!packed) {
     console.log("  ✗ npm pack 失败，无法生成 tgz");
     if (lastErr) console.log("    " + lastErr.split("\n")[0]);
-    console.log("    候选路径都试过了：" + npmCandidates.join(" | "));
+    console.log("    候选路径都试过了：" + npmCandidates.join(" | ") + " | PATH 里的 npm");
     process.exit(1);
   }
   const tgzPath = join(RELEASES, TGZ_NAME);
@@ -221,21 +264,40 @@ if (existsSync(tgzPath)) {
   ck(refs.length === 0 || refs.every((v) => v === VERSION),
     "tgz 内 README 引用的 tgz 版本号正确", refs.join(",") || "（未写死版本号）");
 
-  // 包内文档不得再**声称** macOS 不可用。
+  // 包内文档不得再**声称** macOS / Linux 装不了。
   //
-  // ⚠️ 断言必须能区分"主张"与"引用错误主张并纠正" —— 否则更正段落会把自己判失败。
-  // 这里只查**表格行**（`| … | … |`）：真正的平台结论必然写在表格里，
-  // 而"早先写过 macOS ❌，那是错的"这种内联引述不会以 `|` 开头。
+  // ⚠️ 断言要能区分"主张"与"引用错误主张并纠正"，且**不能只扫表格行** ——
+  //     第一次修这个问题时只改了平台表，README 的**散文段落**还留着
+  //     "没有可安装的 DSH 宿主"，同一份发布物自相矛盾，而当时的断言只 filter
+  //     表格行，结构上就抓不到（审计方指出后才补上）。
+  //
+  // 判据（两次误报换来的）：
+  //   · 表格行 → 出现 `macOS` + `❌` 即违规（表格里不会放更正说明）
+  //   · 散文   → 命中关键词即违规，但**跳过引用块**（以 `>` 开头）
+  // 更正说明一律写在 `>` 引用块里（这是本仓库的既有写法），正文主张不会。
   for (const f of ["README.md", "INSTALL.md", "QUICKSTART.md"]) {
     const p = existsSync(join(P, f)) ? join(P, f) : join(ROOT, f);
     if (!existsSync(p)) continue;
-    const rows = readFileSync(p, "utf8")
-      .split("\n")
-      .filter((l) => l.trim().startsWith("|"));
-    const bad = rows.filter((l) => /macOS/i.test(l) && /❌/.test(l));
-    const onlyWin = rows.filter((l) => /只有这一个官方构建/.test(l));
-    ck(bad.length === 0 && onlyWin.length === 0, `tgz 内 ${f} 的平台表不再声称 macOS 不可用`,
-      bad.length ? bad[0].trim().slice(0, 70) : "");
+    const lines = readFileSync(p, "utf8").split("\n");
+
+    const badRows = lines.filter((l) => l.trim().startsWith("|") && /macOS/i.test(l) && /❌/.test(l));
+
+    const KEYWORDS = [
+      /只有 Windows x64 一个构建/,
+      /只针对 win32-x64 构建/,
+      /没有可安装的 DSH 宿主/,
+      /macOS \/ Linux 上暂时/,
+      /一旦官方发布 macOS/,
+      /只有这一个官方构建/,
+    ];
+    const badProse = lines.filter((l) => {
+      if (l.trim().startsWith(">")) return false; // 引用块 = 更正说明，跳过
+      return KEYWORDS.some((re) => re.test(l));
+    });
+
+    ck(badRows.length === 0 && badProse.length === 0,
+      `${f} 不再声称 macOS/Linux 装不了（表格 + 散文，跳过引用块）`,
+      (badRows[0] ?? badProse[0] ?? "").trim().slice(0, 70));
   }
   execFileSync(process.execPath, ["-e", `require('node:fs').rmSync(${JSON.stringify(tmp)},{recursive:true,force:true})`]);
 }
@@ -244,10 +306,13 @@ if (existsSync(zipPath)) {
   // 不依赖外部库，直接读 zip 的中央目录里的条目名
   const buf = readFileSync(zipPath);
   const names = [];
+  const entryOffsets = [];
   for (let i = 0; i + 46 <= buf.length; i += 1) {
     if (buf.readUInt32LE(i) === 0x02014b50) {
       const nlen = buf.readUInt16LE(i + 28);
       names.push(buf.subarray(i + 46, i + 46 + nlen).toString("utf8"));
+      // 本地头偏移在中央目录项的第 42 字节
+      entryOffsets.push({ name: names[names.length - 1], localAt: buf.readUInt32LE(i + 42) });
     }
   }
   ck(names.length > 0, "zip 中央目录可解析", `${names.length} 个条目`);
@@ -262,6 +327,44 @@ if (existsSync(zipPath)) {
   ck(names.some((n) => n.endsWith("/tools/pack-release.mjs")), "zip 内含打包脚本（便于用户自己重打）");
   ck(names.some((n) => n.endsWith(".tgz")), "zip 内包含 tgz 安装包");
   ck(names.some((n) => n.endsWith("快速上手.md")), "zip 内含 快速上手.md");
+
+  // ── zip 的**内容**也要比对，不能只查条目名 ──
+  //
+  // ⚠️ 否则"只重打了 tgz、忘了重打 zip"这种情况 --check 依然全绿，
+  // 而 zip 里躺着旧代码和旧 tgz。上面几条只验证了结构，验证不了内容。
+  const readEntry = (entry) => {
+    // 本地文件头：30 字节固定 + 文件名长度 + 扩展区长度
+    const nlen = buf.readUInt16LE(entry.localAt + 26);
+    const elen = buf.readUInt16LE(entry.localAt + 28);
+    const method = buf.readUInt16LE(entry.localAt + 8);
+    const csize = buf.readUInt32LE(entry.localAt + 18);
+    const dataAt = entry.localAt + 30 + nlen + elen;
+    const raw = buf.subarray(dataAt, dataAt + csize);
+    return method === 8 ? zlib.inflateRawSync(raw) : raw;
+  };
+  // 打包脚本自己写入的：deflate
+  for (const f of ["lib/client.js", "lib/index.js", "lib/holidays.js", "package.json", "README.md", "INSTALL.md"]) {
+    const entry = entryOffsets.find((e) => e.name.endsWith("/" + f));
+    if (!entry) { ck(false, `zip 内含 ${f}`); continue; }
+    const a = createHash("sha256").update(readEntry(entry)).digest("hex");
+    const b = createHash("sha256").update(readFileSync(join(ROOT, f))).digest("hex");
+    ck(a === b, `zip 内 ${f} 与仓库逐字节一致`);
+  }
+  // 内嵌的 tgz 必须与 releases/ 里那一份相同，否则用户从 zip 拿到的安装包是旧的
+  const tgzEntry = entryOffsets.find((e) => e.name.endsWith(".tgz"));
+  if (tgzEntry && existsSync(join(RELEASES, TGZ_NAME))) {
+    const a = createHash("sha256").update(readEntry(tgzEntry)).digest("hex");
+    const b = createHash("sha256").update(readFileSync(join(RELEASES, TGZ_NAME))).digest("hex");
+    ck(a === b, "zip 内嵌的 tgz 与 releases/ 中的逐字节一致（防止只重打了一半）");
+  }
+  // zip 里的中文文档是打包时从仓库根复制的，也要比对
+  for (const [src, dst] of [["QUICKSTART.md", "快速上手.md"], ["CHANGELOG.md", "更新记录.md"], ["INSTALL.md", "安装说明.md"]]) {
+    const entry = entryOffsets.find((e) => e.name.endsWith("/" + dst));
+    if (!entry) { ck(false, `zip 内含 ${dst}`); continue; }
+    const a = createHash("sha256").update(readEntry(entry)).digest("hex");
+    const b = createHash("sha256").update(readFileSync(join(ROOT, src))).digest("hex");
+    ck(a === b, `zip 内 ${dst} == 仓库的 ${src}`);
+  }
 }
 
 console.log("");
