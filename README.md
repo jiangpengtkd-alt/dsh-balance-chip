@@ -2,7 +2,10 @@
 
 [![tests](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml/badge.svg)](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![version](https://img.shields.io/badge/version-0.10.2-informational.svg)](./CHANGELOG.md)
+[![node](https://img.shields.io/badge/node-%E2%89%A522.15.0-informational.svg)](./INSTALL.md)
+
+> 版本号见 [package.json](./package.json) 与 [CHANGELOG.md](./CHANGELOG.md)。
+> （这里原先是写死的版本徽章，改版本时忘了同步，现已去掉那个会漂移的字段。）
 
 DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **DeepSeek 余额** 与 **消费**，点击可展开明细。
 
@@ -34,12 +37,14 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 - **峰谷自适应**：单价按官方规则实时切换（高峰 = 工作日 9-12 / 14-18 点；法定节假日全天按空闲）
 - **外观对齐原厂**：字号、字重、行高、内边距、分割线**逐条抄自官方 CSS 模块**，不是估的（见「实现要点」）
 - **零依赖**：纯 JavaScript，无原生模块，无 install / postinstall 脚本
-- **不联网**：余额走本机 DSH 账号服务，费用从本机会话日志计算，运行时不访问任何外部接口
+- **首选路径不联网**：余额走本机 DSH 账号服务，费用从本机会话日志与会话投影计算。
+  ⚠️ **但有一条兜底路径会联网** —— 账号服务不可用时回退到
+  `api.deepseek.com/user/balance`，带上本机已配置的 API Key。详见「它联不联网」
 
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.10.3.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.10.4.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -143,7 +148,7 @@ C:\Users\<user>\.dsh\profiles\desktop\
 一旦官方发布 macOS 或 Linux 版 DSH，本包**无需任何改动**即可安装：
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.3.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.4.tgz
 ```
 
 （把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。）

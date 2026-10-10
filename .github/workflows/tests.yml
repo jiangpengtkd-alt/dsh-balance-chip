@@ -1,8 +1,8 @@
 name: tests
 
-# 三套测试都是纯 Node、零依赖、不联网，所以 CI 很轻。
-# 关键前提已核对：Node 24 内置 zstd（node:zlib 的 zstdDecompressSync），
-# 所以不需要额外安装任何东西。
+# 全部是纯 Node、零依赖、不联网，所以 CI 很轻。
+# ⚠️ 运行环境要求 Node ≥ 22.15.0：host 端用 node:zlib 的 zstdDecompressSync 解压会话日志，
+#    该 API 自 Node 22.15.0 起提供。起初矩阵里写了 20，是错的，CI 自己抓到了。
 on:
   push:
     branches: [main]
@@ -48,3 +48,33 @@ jobs:
             echo "::error::docs/preview.html 与 lib/client.js 不同步，请本地跑 node tools/gen-preview.mjs 后提交";
             exit 1;
           }
+
+      # ── 发布产物校验 ──
+      #
+      # 这一步是被两个真实缺陷逼出来的，两条都只在"有人手工解开包看"时才会发现：
+      #   · zip 用 Windows 反斜杠写条目名 → macOS/Linux 解压后目录结构丢失（平铺成 19 个文件）
+      #   · 包内 README 落后一个版本 → 照它操作会去找一个不存在的 tgz
+      # 断言写在 tools/pack-release.mjs 里，本地与 CI 共用同一套。
+      - name: 发布产物与 HEAD 一致
+        run: node tools/pack-release.mjs --check
+
+      # 只在一个 Node 版本上跑一次（与 Node 版本无关）
+      - name: 文档一致性（防止已被实测推翻的结论复活）
+        if: matrix.node-version == 24
+        run: |
+          fail=0
+          for pat in "官方无 macOS 构建" "只有这一个官方构建" "只提供 .win-x64. 一个 feed"; do
+            if grep -rInE "$pat" --include="*.md" .; then
+              echo "::error::文档里出现了已被实测推翻的结论：$pat"
+              fail=1
+            fi
+          done
+          # zip 产物不得含反斜杠条目（macOS/Linux 解压会丢目录结构）
+          for z in releases/*.zip; do
+            [ -e "$z" ] || continue
+            if unzip -Z1 "$z" | grep -q '\\'; then
+              echo "::error::$z 的条目名含反斜杠，非 Windows 解压会丢失目录结构"
+              fail=1
+            fi
+          done
+          exit $fail

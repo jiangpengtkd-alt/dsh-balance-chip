@@ -1,0 +1,18 @@
+# 统一换行符：仓库内一律 LF。
+#
+# ⚠️ 不加这个文件时，Windows 上 `core.autocrlf=true` 会把检出后的文件变成 CRLF，
+# 而 CI（Linux）跑 `node tools/gen-preview.mjs` 后生成的 docs/preview.html 是 LF ——
+# 于是 `git diff --exit-code docs/preview.html` **每次都会报"不同步"**，
+# 但那只是换行符差异，不是真的不同步。这类假失败会让人开始忽略 CI。
+* text=auto eol=lf
+
+# 二进制产物不要做任何转换
+*.tgz binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.ico binary
+
+# 发布包与预览页是生成产物，但仍入库（前者供下载，后者供直接查看）
+releases/* -diff
+docs/preview.html -diff

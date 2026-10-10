@@ -1,6 +1,6 @@
 {
   "name": "dsh-balance-mini",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "DSH web GUI plugin: shows DeepSeek account balance and per-request/session cost next to the context meter, priced with DeepSeek's peak/off-peak rules (weekday hours, weekends and PRC statutory holidays). Host-side reads only; credentials never leave the machine.",
   "type": "module",
   "license": "MIT",

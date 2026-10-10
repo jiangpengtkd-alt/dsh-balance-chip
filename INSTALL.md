@@ -1,42 +1,49 @@
 # 安装与平台支持
 
-> 本文件是**包内唯一的安装入口**。技术细节（数据来源、计价规则、实现要点）见
-> [README.md](./README.md)，版本历史见 [CHANGELOG.md](./CHANGELOG.md)。
+> 安装入口不止本文件 —— 同目录还有 [QUICKSTART.md](./QUICKSTART.md)（中文上手，含每个数字的定义）。
+> 技术细节（数据来源、计价规则、实现要点）见 [README.md](./README.md)，
+> 版本历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
-## 一、先确认目标平台
+## 一、运行环境
 
-| 平台 | 能否安装本插件 | 原因 |
+| 项 | 要求 | 原因 |
 |---|---|---|
-| **Windows x64** | ✅ | 目前 DSH 桌面版**只有这一个官方构建** |
-| macOS（Intel / Apple silicon） | ❌ | 官方无 macOS 构建 |
-| Linux | ❌ | 官方无 Linux 构建 |
-| Windows ARM64 | ❌ | 官方无 ARM 构建 |
+| **DSH 桌面版** | 已安装并能正常启动 | 插件运行在它里面 |
+| **Node** | **≥ 22.15.0** | host 端用 `node:zlib` 的 `zstdDecompressSync` 解压会话日志（0.10.3 修正：原先误写 `>=20`，CI 在 Node 20 上直接 import 失败） |
 
-判断依据是安装目录里的**构建元数据**（比去猜下载地址可靠）：
+> DSH 桌面版**内置** Node（实测 24.18.1），满足要求 —— 正常安装 DSH 的用户不必另外装 Node。
+> 这个要求只在"用外部 Node 跑 `tools/` 下的测试脚本"时才需要自己满足。
 
+## 二、平台支持
+
+**插件是纯 JavaScript，Windows / macOS / Linux 同一份代码都能跑。**
+（早先的版本这里写过"macOS ❌ 官方无 macOS 构建" —— **那是错的**。
+依据只是本机安装目录里的构建元数据，那描述的是**这一台机器**，不是官方发布的平台列表。
+macOS 版确实存在，且已实测跑通。）
+
+| 平台 | 状态 | 已验证的组合 |
+|---|---|---|
+| **Windows x64** | ✅ 实机验证 | win32-x64 + DSH 0.2.0-rc.2（Node 24.18.1） |
+| **macOS arm64** | ✅ 实机验证 | darwin-arm64 + DSH 0.2.0-rc.2（Node 24.18.1） |
+| macOS x64 | 预期可用 | 同一份代码，未单独验证 |
+| Linux | 预期可用 | 同一份代码，未单独验证 |
+
+判断你自己的 DSH 是哪个平台，读安装目录里的 `resources/app.asar` → `dsh/desktop-runtime.json`：
+
+```json
+{ "platform": "darwin", "arch": "arm64", "release": { "version": "0.2.0-rc.2", "nodeVersion": "24.18.1" } }
 ```
-<DSH 安装目录>/resources/app.asar → dsh/desktop-runtime.json
-{
-  "platform": "win32",
-  "arch": "x64",
-  "release": { "version": "0.2.0-rc.2", "nodeVersion": "24.18.1" }
-}
-```
 
-即当前发行版**只针对 win32-x64 构建**。
+`platform` 在 Windows 上是 `win32`、macOS 上是 `darwin`、Linux 上是 `linux`。
 
-> 早先的版本在这里引用过一个更新源地址并声称"实测 200 / 其余 404"。
-> 那些说法**不成立**：实测该域名下包括 win-x64 在内的路径**全部 404**，
-> 属于想当然写下的。现已删除，改为引用上面的构建元数据。
-
-**所以"Mac 上装不了"不是本插件的问题，而是没有可安装的 DSH 宿主。**
-
-一旦官方发布 macOS / Linux 版 DSH，把上面那个 `platform` 换成别的值即可确认；
-届时本包**无需任何改动**即可安装。
+> ⚠️ 这里曾经引用过一个更新源地址并声称"实测 200 / 其余 404"。那些说法**不成立** ——
+> 那是我猜的 URL，实测全部 404。**而"只有 win-x64 一个 feed"的结论也因此是错的**：
+> `feeds/win-x64/` 是**本机安装实例**的更新地址，Mac 安装实例用的是 `feeds/darwin-*`。
+> 现已改为引用构建元数据 + 实机验证结果。
 
 ### 插件本身是跨平台的
 
-一旦官方发布 macOS / Linux 版 DSH，本包**无需任何改动**即可安装 —— 因为它：
+因为它：
 
 - 纯 JavaScript，**无原生模块**（没有 `.node` 二进制）
 - **无 install / postinstall 脚本**，无编译步骤

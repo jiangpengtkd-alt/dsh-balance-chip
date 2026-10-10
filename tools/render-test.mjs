@@ -183,27 +183,29 @@ globalThis.document = {
 };
 // ⚠️ 只检查**浮层里的 dt 行**。不能拿整棵树的文本查「本轮消耗」——
 // 胶囊上也写着同一个词，而"本轮消耗"是"本轮消耗"的子串，会假失败。
-const panelText = (() => {
-  ex.__beat.snapshot = {
-    configured: true, total: 550.69,
-    cost: {
-      total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true,
-      avgPerTurn: 0.19, turns: 90, cacheShare: 0.994,
-      totalTokens: { cacheReadTokens: 100, uncachedInputTokens: 1, outputTokens: 2, cacheWriteTokens: 0 },
-      dayTokens: { cacheReadTokens: 50, uncachedInputTokens: 1, outputTokens: 1, cacheWriteTokens: 0 },
-      peak: false, holiday: false, holidayDataKnown: true,
-    },
-  };
+//
+// 抽成函数是为了能换不同的快照再渲染一次（例如切换 holidayDataKnown），
+// 断言"两种状态渲染结果不同"。
+//
+// ⚠️ 返回的是**标签与值拼在一起**的数组：只收 dt 会漏掉"值随状态变化"这类断言
+// （例如「节假日数据：已收录 / 本年未收录」——标签不变，变的是值）。
+const panelRows = (snapshot) => {
+  ex.__beat.snapshot = snapshot;
   hooks = []; cursor = 0;
   const props = { sessionId: "s1", refreshMs: 15000, requestBalance: () => {} };
   rt.begin();
   Comp(props);
   rt.begin();
-  const dts = [];
+  const out = [];
+  let lastDt = null;
   const orig = reactStub.createElement;
   reactStub.createElement = (tp, p, ...k) => {
     const el = { t: tp, p, k: k.flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false) };
-    if (tp === "dt") dts.push(String(el.k[0]));
+    if (tp === "dt") {
+      lastDt = String(el.k[0]);
+      out.push(lastDt);
+    }
+    if (tp === "dd") out.push(lastDt + " = " + String(el.k[0]));
     return el;
   };
   try {
@@ -211,12 +213,40 @@ const panelText = (() => {
   } finally {
     reactStub.createElement = orig;
   }
-  return dts;
-})();
+  return out;
+};
+
+const panelText = panelRows({
+  configured: true, total: 550.69,
+  cost: {
+    total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true,
+    avgPerTurn: 0.19, turns: 90, cacheShare: 0.994,
+    totalTokens: { cacheReadTokens: 100, uncachedInputTokens: 1, outputTokens: 2, cacheWriteTokens: 0 },
+    dayTokens: { cacheReadTokens: 50, uncachedInputTokens: 1, outputTokens: 1, cacheWriteTokens: 0 },
+    peak: false, holiday: false, holidayDataKnown: true,
+  },
+});
 // ⚠️ 「本日消耗」已按用户要求**从正文移到头部右侧**，正文里不该再有 ——
 // 与「余额」同理：同一个数出现两次会让人以为它们是两个不同的值。
 ck(!panelText.includes("本日消耗"), "正文**不含**「本日消耗」行（已移到头部）", panelText.join(" / "));
 ck(panelText.includes("本日 token"), "面板含「本日 token」行");
+// ── 「节假日数据」提示行 ──
+// 未收录当年节假日时，所有法定节假日都会被按工作日高峰计价（费率约 2 倍），
+// 而且不报错。原先只在「时段」的措辞上悄悄换一个说法，用户根本看不出差别 ——
+// 现在单列一行显式警示，这两条断言保证它不会被改掉。
+ck(panelText.includes("节假日数据"), "面板含「节假日数据」行（年度维护的可见提示）");
+{
+  const known = panelRows({ configured: true, total: 100, cost: { total: 1, holidayDataKnown: true } });
+  const unknown = panelRows({ configured: true, total: 100, cost: { total: 1, holidayDataKnown: false } });
+  // ⚠️ 用 `.some()` 而不是 `Array.includes("子串")` —— 后者是**精确匹配元素**，
+  // 查子串永远为假（这里踩过一次，表现为"渲染明明对，断言却红"）。
+  ck(known.some((x) => x.includes("已收录")), "数据已收录时显示「已收录」");
+  ck(
+    unknown.some((x) => x.includes("本年未收录") && x.includes("偏高")),
+    "数据未收录时**显式警示**（不能只换个措辞）",
+  );
+  ck(known.join("") !== unknown.join(""), "两种状态渲染结果不同（提示确实随数据变化）");
+}
 ck(!panelText.includes("本轮消耗"), "面板**不含**「本轮消耗」（与胶囊重复）");
 ck(!panelText.includes("本轮 token"), "面板不含「本轮 token」");
 // ⚠️ 「余额」已按用户要求**从正文移到头部**（官方弹窗的头部也放主数值），
