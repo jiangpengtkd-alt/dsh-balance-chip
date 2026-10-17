@@ -101,6 +101,11 @@
   .dsh-balance-mini-panel .bm-details{display:grid;grid-template-columns:minmax(76px,auto) minmax(0,1fr);gap:6px 16px;margin:0;color:var(--dsw-alias-label-tertiary);font-weight:400}
   .dsh-balance-mini-panel .bm-details dt{margin:0}
   .dsh-balance-mini-panel .bm-details dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}
+  .dsh-balance-mini-panel .bm-slot{font-weight:600}
+  .dsh-balance-mini-panel .bm-slot-idle{color:var(--dsw-alias-state-success-primary)}
+  .dsh-balance-mini-panel .bm-slot-peak{color:var(--dsw-alias-state-warn-primary)}
+  .dsh-balance-mini-panel .bm-foot{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .dsh-balance-mini-panel .bm-foot-time{font:inherit;font-weight:400;color:var(--dsw-alias-label-secondary)}
   .dsh-balance-mini-panel .bm-rule{height:1px;background:var(--dsw-alias-separator-primary);margin:8px 0}
   .dsh-balance-mini-panel .bm-refresh{font:inherit;color:var(--dsw-alias-label-secondary);background:0 0;border:0;padding:0;cursor:pointer;transition:color .12s}
   .dsh-balance-mini-panel .bm-refresh:hover:not(:disabled){color:var(--dsw-alias-label-primary)}
@@ -162,10 +167,12 @@
         <dt>会话命中缓存</dt><dd>4.31亿（99.4%）</dd>
         <dt>本日 token</dt><dd>12.9万</dd>
         <dt>单价（元/百万 token）</dt><dd>命中 0.02 · 未命中 1 · 输出 4</dd>
-        <dt>当前时段</dt><dd>空闲（非工作日或非高峰时段）</dd>
       </dl>
       <div class="bm-rule"></div>
-      <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
+      <div class="bm-foot">
+        <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
+        <span class="bm-foot-time">当前时段：<span class="bm-slot bm-slot-idle">空闲</span></span>
+      </div>
     </div>
   </div>
 </div>

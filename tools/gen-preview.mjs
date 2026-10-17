@@ -239,10 +239,12 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
         <dt>会话命中缓存</dt><dd>4.31亿（99.4%）</dd>
         <dt>本日 token</dt><dd>12.9万</dd>
         <dt>单价（元/百万 token）</dt><dd>命中 0.02 · 未命中 1 · 输出 4</dd>
-        <dt>当前时段</dt><dd>空闲（非工作日或非高峰时段）</dd>
       </dl>
       <div class="bm-rule"></div>
-      <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
+      <div class="bm-foot">
+        <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
+        <span class="bm-foot-time">当前时段：<span class="bm-slot bm-slot-idle">空闲</span></span>
+      </div>
     </div>
   </div>
 </div>
@@ -339,7 +341,14 @@ const checks = [
   // 节假日数据只在**缺数据**时出现（警示），数据齐全时不显示；示例是齐全状态，故应缺席
   ["浮层不含「节假日数据」行（数据齐全时不显示）", !/<dt>节假日数据<\/dt>/.test(html)],
   ["浮层不含「数据来源」行（已移除）", !/<dt>数据来源<\/dt>/.test(html)],
-  ["时段行标签为「当前时段」", /<dt>当前时段<\/dt>/.test(html)],
+  ["时段行不在正文（已移到底部与刷新同一排）", !/<dt>当前时段<\/dt>/.test(html)],
+  ["底排含「当前时段：空闲」（值加粗、带状态色）", /class="bm-foot-time">当前时段：<span class="bm-slot bm-slot-idle">空闲<\/span>/.test(html)],
+  ["底排含「↻ 立即刷新」且与时段同一排", /class="bm-foot"[\s\S]*?↻ 立即刷新[\s\S]*?bm-foot-time/.test(html)],
+  ["时段结论加粗、空闲绿、高峰橙", /bm-slot\{font-weight:600\}/.test(chipCss)
+    && /bm-slot-idle\{color:var\(--dsw-alias-state-success-primary\)\}/.test(chipCss)
+    && /bm-slot-peak\{color:var\(--dsw-alias-state-warn-primary\)\}/.test(chipCss)],
+  ["底排两端对齐、时段与刷新同一套字体", /bm-foot\{[^}]*justify-content:space-between/.test(chipCss)
+    && /bm-foot-time\{font:inherit;font-weight:400;color:var\(--dsw-alias-label-secondary\)\}/.test(chipCss)],
   ["浮层正文不含本日消耗行（已在头部）", !/<dt>本日消耗<\/dt>/.test(html)],
 ];
 console.log(`  已生成 ${outPath}`);

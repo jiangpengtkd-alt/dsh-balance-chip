@@ -273,7 +273,7 @@ ck(panelText.some((x) => x.includes("赠金余额（优先消耗）")), "赠金�
 // 「数据来源」整行移除：它回答的是"这次余额从哪读的"，属于一次性信息，
 // 真正需要时看 README 即可，面板里不需要常驻。
 ck(!panelText.some((x) => x.includes("数据来源")), "面板**不含**「数据来源」行（已移除）");
-ck(panelText.some((x) => x.includes("当前时段")), "时段行标签为「当前时段」（写全「当前」二字）");
+ck(!panelText.some((x) => x.includes("当前时段")), "「当前时段」不占正文 dt 行（已移到底部与刷新同一排）");
 ck(!panelText.includes("本轮消耗"), "面板**不含**「本轮消耗」（与胶囊重复）");
 ck(!panelText.includes("本轮 token"), "面板不含「本轮 token」");
 // ⚠️ 「余额」已按用户要求**从正文移到头部**（官方弹窗的头部也放主数值），
@@ -351,14 +351,62 @@ const captureHead = (snapshot) => {
 const headNodes = captureHead({
   configured: true, total: 550.69,
   cost: { total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true },
-});
-const head = headNodes.find((n) => n.cls === "bm-head");
-const headMain = headNodes.find((n) => n.cls === "bm-head-main");
+});const head = headNodes.find((n) => n.cls === "bm-head");const headMain = headNodes.find((n) => n.cls === "bm-head-main");
 ck(!!head, "头部元素 bm-head 存在");
 ck(!!headNodes.find((n) => n.cls === "bm-head-rule"), "头部下有一条分割线 bm-head-rule");
 ck(!!headMain && headMain.kids.includes("svg") && headMain.kids.includes("总余额"), "头部含「图标 + 总余额」", headMain ? headMain.kids.join(",") : "");
 // 头部应含余额金额（¥550.69）——它是主数值，官方弹窗的头部也放主数值
 ck(!!head && head.kids.includes("¥550.69"), "头部含余额金额 ¥550.69", head ? head.kids.join(",") : "");
+
+// ── 底排：刷新在左，「当前时段：…」靠右 ──
+// 用户要求把时段从正文移到底排、与「↻ 立即刷新」同一行右对齐，只留结论（不带判断依据）。
+// 采集方式与 captureHead 一致：先打开浮层，再递归收 bm-foot / bm-foot-time 的文本。
+const captureFoot = (snapshot) => {
+  ex.__beat.snapshot = snapshot;
+  hooks = []; cursor = 0;
+  rt._boolSetter = null;
+  const props = { sessionId: "s1", refreshMs: 15000, requestBalance: () => {} };
+  rt.begin();
+  Comp(props);
+  if (rt._boolSetter) rt._boolSetter(true);
+  const found = [];
+  const orig = reactStub.createElement;
+  reactStub.createElement = (tp, p, ...k) => {
+    const el = { t: tp, p, k: k.flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false) };
+    if (p && (p.className === "bm-foot" || p.className === "bm-foot-time")) {
+      const texts = [];
+      const walk = (node) => {
+        if (node === null || node === undefined || typeof node === "boolean") return;
+        if (typeof node !== "object") { texts.push(String(node)); return; }
+        for (const c of node.k) walk(c);
+      };
+      for (const c of el.k) walk(c);
+      found.push({ cls: p.className, kids: texts });
+    }
+    return el;
+  };
+  try {
+    rt.begin();
+    Comp(props);
+  } finally {
+    reactStub.createElement = orig;
+  }
+  return found;
+};
+{
+  const idle = captureFoot({ configured: true, total: 100, cost: { total: 1, peak: false } });
+  const peak = captureFoot({ configured: true, total: 100, cost: { total: 1, peak: true } });
+  const foot = idle.find((n) => n.cls === "bm-foot");
+  const footText = foot ? foot.kids.join("") : "";
+  ck(!!foot, "底排元素 bm-foot 存在");
+  ck(footText.includes("↻ 立即刷新"), "底排含「↻ 立即刷新」", footText);
+  ck(footText.includes("当前时段") && footText.includes("空闲"), "底排显示「当前时段：空闲」", footText);
+  ck(!footText.includes("（"), "时段结论不再带括号判断依据", footText);
+  const peakText = (peak.find((n) => n.cls === "bm-foot") ?? { kids: [] }).kids.join("");
+  ck(peakText.includes("高峰"), "高峰时底排显示「高峰」", peakText);
+  const slot = idle.find((n) => n.cls === "bm-foot-time");
+  ck(!!slot && slot.kids.includes("空闲"), "「当前时段：」后接状态值（未被截断）", slot ? slot.kids.join("|") : "");
+}
 
 // ── 「总余额」与「充值余额」是两个数，必须分开取（用户要求胶囊显示总余额）──
 // 胶囊：total（充值 + 赠金）；面板头部：topUp（充值）。
@@ -481,6 +529,24 @@ ck(/font-weight:400/.test(detailsCss), "正文行字重显式 400（否则会继
 const ddCss = (clientSrc.match(/\.bm-details dd\{[^}]*\}/) ?? [""])[0];
 ck(!/color:var\(--dsw-alias-label-secondary\)/.test(ddCss), "正文数值不另设颜色（与标签同色，同官方）", ddCss.slice(0, 110));
 ck(/text-align:right/.test(ddCss), "正文数值仍右对齐（官方靠对齐而非亮度区分）");
+// ── 底排「当前时段」：加粗 + 状态色；与「立即刷新」同一套字体 ──
+{
+  const slotCss = (clientSrc.match(/\.bm-slot\{[^}]*\}/) ?? [""])[0];
+  ck(/font-weight:600/.test(slotCss), "时段结论加粗", slotCss.slice(0, 90));
+  const idleCss = (clientSrc.match(/\.bm-slot-idle\{[^}]*\}/) ?? [""])[0];
+  ck(/var\(--dsw-alias-state-success-primary\)/.test(idleCss), "空闲用成功绿", idleCss.slice(0, 110));
+  const peakCss = (clientSrc.match(/\.bm-slot-peak\{[^}]*\}/) ?? [""])[0];
+  ck(/var\(--dsw-alias-state-warn-primary\)/.test(peakCss), "高峰用警告橙（不是错误红）", peakCss.slice(0, 110));
+  const footCss = (clientSrc.match(/\.bm-foot\{[^}]*\}/) ?? [""])[0];
+  ck(/justify-content:space-between/.test(footCss), "底排两端对齐（刷新在左、时段靠右）", footCss.slice(0, 120));
+  const footTimeCss = (clientSrc.match(/\.bm-foot-time\{[^}]*\}/) ?? [""])[0];
+  ck(
+    /font:inherit/.test(footTimeCss) && /font-weight:400/.test(footTimeCss)
+      && /var\(--dsw-alias-label-secondary\)/.test(footTimeCss),
+    "「当前时段」与「立即刷新」同一套字体/字重/亮度",
+    footTimeCss.slice(0, 130),
+  );
+}
 // 官方 .Xt1eiG_titleValue 不设颜色不设字重 → 与标题同色同粗
 const hvCss = (clientSrc.match(/\.bm-head-value\{[^}]*\}/) ?? [""])[0];
 ck(!/color:/.test(hvCss) && !/font-weight/.test(hvCss), "头部金额与「余额」同色同粗（同官方 titleValue）", hvCss.slice(0, 110));
