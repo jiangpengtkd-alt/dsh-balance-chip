@@ -47,7 +47,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.11.3.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.11.4.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -184,10 +184,10 @@ C:\Users\<user>\.dsh\profiles\desktop\
 
 ```bash
 # macOS / Linux
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.3.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.4.tgz
 
 # Windows (PowerShell)
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.3.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.4.tgz"
 ```
 
 把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。

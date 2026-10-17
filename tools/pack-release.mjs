@@ -129,6 +129,46 @@ function writeZip(entries, outPath) {
   writeFileSync(outPath, Buffer.concat([...chunks, centralBuf, end]));
 }
 
+/**
+ * zip 顶层那份「从这里开始.md」的正文。
+ *
+ * ⚠️ **由打包器生成，不在仓库里维护** —— 这类"入口/索引"文档最容易变成
+ * 没人管的野生文档（本项目的「快速上手.md」就烂过一次：里面留着已被撤回的说法，
+ * 因为它不在版本控制里，没人 review、没人 diff）。生成 + 断言才是可持续的做法：
+ *   · 版本号由 VERSION 填，不会写错；
+ *   · 它引用的三份文档在 --check 里断言必须存在于 zip 内；
+ *   · zip 里那份与这里生成的结果逐字节比对（防止"改了模板没重打包"）。
+ */
+function startHereDoc(version) {
+  return `# 从这里开始
+
+dsh-balance-mini ${version} —— DSH Web GUI 插件：在输入框下方显示**余额**与**消费**，点开看明细。
+
+## 三步
+
+1. **装**：\`dsh plugin --profile desktop add dsh-balance-mini-${version}.tgz\`，装完**重启 DSH**
+2. **看**：输入框下方出现「◉ 总余额 ¥…」，点它展开明细
+3. **出问题**：看《安装说明.md》里「装完没反应」那一节
+
+（Windows 上路径要用引号；macOS/Linux 见《安装说明.md》。）
+
+## 三份文档各管什么
+
+| 文档 | 什么时候看 |
+|---|---|
+| 快速上手.md | 第一次装完，想知道每个数字是什么意思 |
+| 安装说明.md | 装不上 / 装完没反应 / 换平台 / 卸载 |
+| 更新记录.md | 想知道这版改了什么 |
+
+英文版对应 \`README.md\` / \`INSTALL.md\` / \`CHANGELOG.md\`；源码在 \`lib/\`，测试与打包脚本在 \`tools/\`。
+
+## 一句话原理
+
+余额从本机 DSH 账号服务读（首选路径不联网；读不到才回退 API Key 接口）；
+消费按官方价目表从会话 token 用量算，高峰/空闲自动切换，**先扣赠金**。
+`;
+}
+
 // ── 组装 zip 内容：plugin/ + tgz + 三份中文文档 ──
 const ZIP_INCLUDE = listFiles(ROOT).filter(
   (f) =>
@@ -136,6 +176,8 @@ const ZIP_INCLUDE = listFiles(ROOT).filter(
     !f.startsWith(".git/") &&
     !f.startsWith(".github/") &&
     f !== ".gitignore" &&
+    // 仓库用的文件：换行符规范 / 二进制标记，对"拿到 zip 的人"没有意义
+    f !== ".gitattributes" &&
     f !== "QUICKSTART.md",
 );
 
@@ -229,6 +271,8 @@ if (!CHECK_ONLY) {
       entries.push({ name: `${prefix}/${dst}`, data: readFileSync(join(ROOT, src)) });
     }
   }
+  // 入口说明（顶层，生成而非维护）
+  entries.push({ name: `${prefix}/从这里开始.md`, data: Buffer.from(startHereDoc(VERSION), "utf8") });
   entries.push({ name: `${prefix}/${TGZ_NAME}`, data: readFileSync(tgzPath) });
   entries.sort((a, b) => (a.name < b.name ? -1 : 1));
 
@@ -340,8 +384,13 @@ if (existsSync(zipPath)) {
     if (buf.readUInt32LE(i) === 0x02014b50) {
       const nlen = buf.readUInt16LE(i + 28);
       names.push(buf.subarray(i + 46, i + 46 + nlen).toString("utf8"));
-      // 本地头偏移在中央目录项的第 42 字节
-      entryOffsets.push({ name: names[names.length - 1], localAt: buf.readUInt32LE(i + 42) });
+      // 本地头偏移在中央目录项的第 42 字节；压缩方法与大小在第 10 / 20 字节
+      entryOffsets.push({
+        name: names[names.length - 1],
+        localAt: buf.readUInt32LE(i + 42),
+        method: buf.readUInt16LE(i + 10),
+        csize: buf.readUInt32LE(i + 20),
+      });
     }
   }
   ck(names.length > 0, "zip 中央目录可解析", `${names.length} 个条目`);
@@ -371,6 +420,21 @@ if (existsSync(zipPath)) {
     const raw = buf.subarray(dataAt, dataAt + csize);
     return method === 8 ? zlib.inflateRawSync(raw) : raw;
   };
+
+  // ── 「从这里开始.md」：入口说明 ──
+  // 它由 startHereDoc() 生成（不在仓库里维护），所以这里既要查"在不在"，
+  // 也要查"跟生成器是不是逐字节一致" —— 后者能抓住"改了模板但忘了重打包"。
+  const indexRec = entryOffsets.find((r) => r.name.endsWith("/从这里开始.md"));
+  ck(!!indexRec, "zip 内含「从这里开始.md」入口说明");
+  // 仓库用的文件不该出现在给用户的包里
+  ck(!names.some((n) => n.endsWith("/.gitattributes")), "zip 内不含 .gitattributes（仓库用文件）");
+  // 入口说明里点名的两份文档必须在包里（快速上手已在上面查过）
+  ck(names.some((n) => n.endsWith("/安装说明.md")), "zip 内含 安装说明.md");
+  ck(names.some((n) => n.endsWith("/更新记录.md")), "zip 内含 更新记录.md");
+  if (indexRec) {
+    ck(readEntry(indexRec).toString("utf8") === startHereDoc(VERSION),
+      "zip 内入口说明与生成器一致（改了模板要重打包）");
+  }
   // 打包脚本自己写入的：deflate
   for (const f of ["lib/client.js", "lib/index.js", "lib/holidays.js", "package.json", "README.md", "INSTALL.md"]) {
     const entry = entryOffsets.find((e) => e.name.endsWith("/" + f));
