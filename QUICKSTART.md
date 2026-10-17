@@ -49,13 +49,13 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **�
 **Windows（PowerShell）**
 
 ```powershell
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.2.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.3.tgz"
 ```
 
 **macOS / Linux（bash / zsh）**
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.2.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.3.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名 —— 真实名字是 `~/.dsh/profiles/` 下的目录名。
@@ -85,10 +85,10 @@ dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.2.tgz
 ```bash
 cd <插件目录>
 node tools/selftest.mjs         # 68 项  host 端到端（余额、计费、回环校验、换轮基准）
-node tools/render-test.mjs .    # 99 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
+node tools/render-test.mjs .    # 110 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
 node tools/heartbeat-test.mjs . #  6 项  心跳独立于组件、节奏参数
 node tools/refresh-test.mjs .   # 13 项  「立即刷新」的排队与补发
-node tools/gen-preview.mjs      # 24 项  预览页自检
+node tools/gen-preview.mjs      # 28 项  预览页自检
 ```
 
 退出码 0 即全部通过。
@@ -207,7 +207,7 @@ dsh plugin --profile desktop remove dsh-balance-mini
 
 | 路径 | 说明 |
 |---|---|
-| `dsh-balance-mini-0.11.2.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
+| `dsh-balance-mini-0.11.3.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
 | `lib/` | 插件源码：`client.js`（浏览器端）、`index.js`（host 端）、`holidays.js` |
 | `README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
 | `INSTALL.md` | 安装与平台支持（含排查清单） |
