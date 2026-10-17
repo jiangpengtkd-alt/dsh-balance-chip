@@ -217,7 +217,7 @@ const panelRows = (snapshot) => {
 };
 
 const panelText = panelRows({
-  configured: true, total: 550.69,
+  configured: true, total: 550.69, topUp: 538.35, granted: 12.34,
   cost: {
     total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true,
     avgPerTurn: 0.19, turns: 90, cacheShare: 0.994,
@@ -230,28 +230,59 @@ const panelText = panelRows({
 // 与「余额」同理：同一个数出现两次会让人以为它们是两个不同的值。
 ck(!panelText.includes("本日消耗"), "正文**不含**「本日消耗」行（已移到头部）", panelText.join(" / "));
 ck(panelText.includes("本日 token"), "面板含「本日 token」行");
+// ── 正文前两行 = 余额构成（标题是总余额，正文拆分） ──
+// 用户定的版式：标题「总余额」→ 第一排「充值余额」→ 第二排「赠金余额」。
+ck(panelText.some((x) => x.includes("充值余额") && x.includes("¥538.35")), "第一排是「充值余额」且取 topUp", panelText.join(" / "));
+{
+  const iTop = panelText.findIndex((x) => x.includes("充值余额"));
+  const iBonus = panelText.findIndex((x) => x.includes("赠金余额"));
+  ck(iTop >= 0 && iBonus > iTop, "行序：充值余额在赠金余额之前", `充值@${iTop} 赠金@${iBonus}`);
+}
+// ── 「赠金余额」行：账号的**第二个钱包** ──
+// 曾经漏掉的就是这个数（host 早就发 `bonusWallets`，界面从不渲染）。
+// 口径是用户定的：**没有赠金就显示 "—"**，0 也不显示 ¥0.00。
+// 标签带「（优先消耗）」——官方扣费规则："当充值余额与赠送余额同时存在时，优先扣减赠送余额"。
+ck(panelText.some((x) => x.includes("赠金余额") && x.includes("¥12.34")), "面板含「赠金余额」行并显示金额", panelText.join(" / "));
+ck(panelText.some((x) => x.includes("赠金余额（优先消耗）")), "赠金行标注「（优先消耗）」（官方扣费顺序）");
+{
+  const zero = panelRows({ configured: true, total: 100, granted: 0 });
+  const missing = panelRows({ configured: true, total: 100 });
+  ck(zero.some((x) => x.includes("赠金余额") && x.includes("—")), "赠金为 0 时显示占位 —（不是 ¥0.00）");
+  ck(missing.some((x) => x.includes("赠金余额") && x.includes("—")), "取不到赠金时同样显示占位 —");
+}
 // ── 「节假日数据」提示行 ──
 // 未收录当年节假日时，所有法定节假日都会被按工作日高峰计价（费率约 2 倍），
 // 而且不报错。原先只在「时段」的措辞上悄悄换一个说法，用户根本看不出差别 ——
-// 现在单列一行显式警示，这两条断言保证它不会被改掉。
-ck(panelText.includes("节假日数据"), "面板含「节假日数据」行（年度维护的可见提示）");
+// 现在单列一行显式警示。
+//
+// ⚠️ 但**数据齐全时不该出现**："已收录"对用户没有信息量，纯噪音；
+// 这一行的存在意义是警示，不是汇报"一切正常"。
 {
   const known = panelRows({ configured: true, total: 100, cost: { total: 1, holidayDataKnown: true } });
   const unknown = panelRows({ configured: true, total: 100, cost: { total: 1, holidayDataKnown: false } });
   // ⚠️ 用 `.some()` 而不是 `Array.includes("子串")` —— 后者是**精确匹配元素**，
   // 查子串永远为假（这里踩过一次，表现为"渲染明明对，断言却红"）。
-  ck(known.some((x) => x.includes("已收录")), "数据已收录时显示「已收录」");
+  ck(!known.some((x) => x.includes("节假日数据")), "数据齐全时**不显示**「节假日数据」行（不汇报一切正常）");
   ck(
     unknown.some((x) => x.includes("本年未收录") && x.includes("偏高")),
     "数据未收录时**显式警示**（不能只换个措辞）",
   );
   ck(known.join("") !== unknown.join(""), "两种状态渲染结果不同（提示确实随数据变化）");
 }
+// ── 面板精简（用户要求） ──
+// 「数据来源」整行移除：它回答的是"这次余额从哪读的"，属于一次性信息，
+// 真正需要时看 README 即可，面板里不需要常驻。
+ck(!panelText.some((x) => x.includes("数据来源")), "面板**不含**「数据来源」行（已移除）");
+ck(panelText.some((x) => x.includes("当前时段")), "时段行标签为「当前时段」（写全「当前」二字）");
 ck(!panelText.includes("本轮消耗"), "面板**不含**「本轮消耗」（与胶囊重复）");
 ck(!panelText.includes("本轮 token"), "面板不含「本轮 token」");
 // ⚠️ 「余额」已按用户要求**从正文移到头部**（官方弹窗的头部也放主数值），
 // 正文里不该再有它 —— 放两处会让读者以为它们是两个不同的数。
-ck(!panelText.includes("余额"), "正文**不含**「余额」行（已移到头部）");
+//
+// ⚠️ 判据必须是**精确匹配整行**（`=== "余额"`），不能查子串：
+// 新增的「赠金余额」行是**另一个数**（账号的第二个钱包），但它含 "余额" 这个子串，
+// 用 includes 会把合法的行一起判失败。
+ck(!panelText.some((x) => x === "余额"), "正文**不含**「余额」行（已移到头部）");
 // ⚠️ 「会话累计」也**不在正文里** —— 它就在胶囊上（实时，2 秒刷新）。
 // 曾经正文里也放一行，同一个数在胶囊和浮层各出现一次；两处刷新节奏不同，
 // 数字对不上时反而让人怀疑哪个是真的。与「余额」「本日消耗」同理：
@@ -277,11 +308,9 @@ ck(!panelText.includes("会话累计 "), "正文**不含**「会话累计」行�
 // ⚠️ 浮层只有 `open === true` 时才会被 createPortal 创建，默认是关的。
 // 所以要先"打开浮层"再采集，否则整棵浮层子树都不存在、断言全假失败。
 // open 的初值是 `false`，rt 在渲染时顺手把它的 setter 记了下来（rt._boolSetter）。
-const headNodes = (() => {
-  ex.__beat.snapshot = {
-    configured: true, total: 550.69,
-    cost: { total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true },
-  };
+/** 打开浮层并收集头部元素（className + 递归文本），供断言用。 */
+const captureHead = (snapshot) => {
+  ex.__beat.snapshot = snapshot;
   hooks = []; cursor = 0;
   rt._boolSetter = null;
   const props = { sessionId: "s1", refreshMs: 15000, requestBalance: () => {} };
@@ -296,7 +325,7 @@ const headNodes = (() => {
   const orig = reactStub.createElement;
   reactStub.createElement = (tp, p, ...k) => {
     const el = { t: tp, p, k: k.flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false) };
-    if (p && (p.className === "bm-head" || p.className === "bm-head-main" || p.className === "bm-head-rule")) {
+    if (p && ["bm-head", "bm-head-main", "bm-head-value", "bm-head-rule"].includes(p.className)) {
       // 递归收集文本 —— 头部里「图标」是嵌套的 svg、金额是嵌套的 span，
       // 只看第一层会得到 "span,span,span" 这种没有信息量的结果（踩过）。
       const texts = [];
@@ -318,14 +347,31 @@ const headNodes = (() => {
     reactStub.createElement = orig;
   }
   return found;
-})();
+};
+const headNodes = captureHead({
+  configured: true, total: 550.69,
+  cost: { total: 17.11, turn: 0.054, day: 1.234, turnOpen: true, turnKnown: true },
+});
 const head = headNodes.find((n) => n.cls === "bm-head");
 const headMain = headNodes.find((n) => n.cls === "bm-head-main");
 ck(!!head, "头部元素 bm-head 存在");
 ck(!!headNodes.find((n) => n.cls === "bm-head-rule"), "头部下有一条分割线 bm-head-rule");
-ck(!!headMain && headMain.kids.includes("svg") && headMain.kids.includes("余额"), "头部含「图标 + 余额」", headMain ? headMain.kids.join(",") : "");
+ck(!!headMain && headMain.kids.includes("svg") && headMain.kids.includes("总余额"), "头部含「图标 + 总余额」", headMain ? headMain.kids.join(",") : "");
 // 头部应含余额金额（¥550.69）——它是主数值，官方弹窗的头部也放主数值
 ck(!!head && head.kids.includes("¥550.69"), "头部含余额金额 ¥550.69", head ? head.kids.join(",") : "");
+
+// ── 「总余额」与「充值余额」是两个数，必须分开取（用户要求胶囊显示总余额）──
+// 胶囊：total（充值 + 赠金）；面板头部：topUp（充值）。
+// 若两处都取 total，就会出现"头部写着充值余额、数字却是总额"的错位。
+{
+  const split = renderWith({ configured: true, total: 600, topUp: 550, granted: 50 });
+  ck(/总余额/.test(split.text) && /¥600\.00/.test(split.text), "胶囊显示「总余额」且取 total（含赠金）", split.text.slice(0, 64));
+  ck(!/充值余额/.test(split.text), "胶囊上不出现「充值余额」（那是面板头部的标签）");
+
+  const splitHeads = captureHead({ configured: true, total: 600, topUp: 550, granted: 50 });
+  const hv = splitHeads.find((n) => n.cls === "bm-head-value");
+  ck(!!hv && hv.kids.join("") === "¥600.00", "面板标题取 total（¥600.00 = 充值 550 + 赠金 50）", hv ? hv.kids.join("") : "(缺)");
+}
 
 // ── ⚠️⚠️ 胶囊的 className —— 曾经的**最大盲区** ──
 //

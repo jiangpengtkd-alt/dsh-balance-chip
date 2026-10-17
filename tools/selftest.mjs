@@ -40,6 +40,8 @@ const sessionStats = {
   turns: 77, steps: 911, llmMs: 1, toolMs: 1, ttftMs: 1, ttftSteps: 1, decodeMs: 1, decodeTokens: 1,
 };
 const BALANCE = { currency: "CNY", balance: "553.5079747" };
+/** 赠金钱包。可变 —— 账号侧是**两个钱包**（充值余额 / 赠金余额），两者要分别验。 */
+let bonusWallets = [];
 
 const stateOf = (_s, key) => {
   if (key === "tokenUsage") {
@@ -60,7 +62,7 @@ const ctx = {
   webServer: { register: (route) => { registered = route; return () => {}; } },
   effect: (fn) => { fn(); },
   deepseekAccount: {
-    getBalance: async () => ({ status: "ready", value: [BALANCE], bonusWallets: [] }),
+    getBalance: async () => ({ status: "ready", value: [BALANCE], bonusWallets }),
   },
   logger: { warn: () => {} },
 };
@@ -173,7 +175,27 @@ console.log("  ── 场景 1：新会话（openTurnStartSeq = null）──");
   ck(v?.cost?.turn === undefined, "本轮为 undefined（无实时值也无历史轮次 → 界面显示占位）");
   ck(near(v?.cost?.avgPerTurn, price(totals) / sessionStats.turns), "每轮平均消耗 = 会话累计 ÷ 轮数");
   ck(v?.cost?.cacheShare > 0.99, "缓存占比 > 99%", `${(v?.cost?.cacheShare * 100).toFixed(1)}%`);
-  ck(v?.total === Number(BALANCE.balance), "余额读取正常", `¥${v?.total}`);
+  ck(v?.topUp === Number(BALANCE.balance), "充值余额读取正常", `¥${v?.topUp}`);
+  ck(v?.total === Number(BALANCE.balance), "无赠金时总余额 = 充值余额", `¥${v?.total}`);
+  ck(v?.granted === undefined, "无赠金钱包时 granted 为 undefined（界面显示占位）");
+}
+
+// ══ 场景 1b：赠金余额 —— 账号的**第二个钱包** ══
+// 曾经漏掉的就是这个数：host 早就把 bonusWallets 发出来了，但界面从不渲染。
+// 三个字段的口径必须分清：topUp=充值余额、granted=赠金余额、total=总余额（两者之和）。
+console.log("\n  ── 场景 1b：赠金余额 ──");
+{
+  bonusWallets = [{ currency: "CNY", balance: "12.34" }];
+  const v = await fetchCost({ sessionId: SESSION_ID });
+  ck(v?.granted === 12.34, "赠金余额读取正常", `¥${v?.granted}`);
+  ck(v?.topUp === Number(BALANCE.balance), "赠金不影响「充值余额」", `¥${v?.topUp}`);
+  ck(near(v?.total, Number(BALANCE.balance) + 12.34), "总余额 = 充值 + 赠金", `¥${v?.total?.toFixed(4)}`);
+  // 币种不对齐时回退到第一个赠金钱包 —— 不能因为币种拼写差异就整行消失
+  bonusWallets = [{ currency: "USD", balance: "1.5" }];
+  const v2 = await fetchCost({ sessionId: SESSION_ID });
+  ck(v2?.granted === 1.5, "币种不一致时回退到首个赠金钱包", `$${v2?.granted}`);
+  ck(near(v2?.total, Number(BALANCE.balance) + 1.5), "总余额按回退到的赠金计算");
+  bonusWallets = [];
 }
 
 // ══ 场景 2：本轮开始（有了 openTurnStartSeq），累计增长 ══

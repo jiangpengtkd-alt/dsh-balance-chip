@@ -47,13 +47,13 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **�
 **Windows（PowerShell）**
 
 ```powershell
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.8.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.2.tgz"
 ```
 
 **macOS / Linux（bash / zsh）**
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.8.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.2.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名 —— 真实名字是 `~/.dsh/profiles/` 下的目录名。
@@ -82,11 +82,11 @@ dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.8.tgz
 
 ```bash
 cd <插件目录>
-node tools/selftest.mjs         # 61 项  host 端到端（余额、计费、回环校验、换轮基准）
-node tools/render-test.mjs .    # 85 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
+node tools/selftest.mjs         # 68 项  host 端到端（余额、计费、回环校验、换轮基准）
+node tools/render-test.mjs .    # 99 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
 node tools/heartbeat-test.mjs . #  6 项  心跳独立于组件、节奏参数
 node tools/refresh-test.mjs .   # 13 项  「立即刷新」的排队与补发
-node tools/gen-preview.mjs      # 19 项  预览页自检
+node tools/gen-preview.mjs      # 24 项  预览页自检
 ```
 
 退出码 0 即全部通过。
@@ -102,7 +102,7 @@ node tools/gen-preview.mjs      # 19 项  预览页自检
 
 | 数 | 含义 | 刷新 |
 |---|---|---|
-| **余额** | 账户充值余额（快照，不含赠送余额） | 15 秒 |
+| **总余额** | 账户可用总额 = **充值余额 + 赠金余额**（快照）。展开浮层可看构成 | 15 秒 |
 | **会话累计** | 本会话建立至今的累计 | 15 秒 |
 | **本轮消耗** | **你这一句话花了多少** —— 从发出到此刻的合计 | **2 秒** |
 
@@ -112,15 +112,18 @@ node tools/gen-preview.mjs      # 19 项  预览页自检
 
 | 位置 | 含义 |
 |---|---|
-| **头部「余额」** | 账户充值余额 |
+| **标题「总余额」** | 账户可用总额 = 充值 + 赠金。胶囊上显示的也是它 |
+| **第一排「充值余额」** | 账户充值余额（不含赠金） |
 | **头部「本日消耗」** | **当天所有会话的总和**（北京时间 0:00 起算） |
+| **第二排「赠金余额（优先消耗）」** | 账号的**第二个钱包**：送的、会过期的那部分。**官方规则：两种余额同时存在时先扣赠金**，所以标了「优先消耗」。没有赠金时显示 `—` |
 | **每轮平均消耗** | 会话累计 ÷ 官方轮数 —— 每次问话的平均花费 |
 | **会话累计 token** | 本会话从建立到现在的 token 总量 |
 | **会话命中缓存** | 上面总量里**命中缓存**的部分，括号内是占比 |
 | **本日 token** | 与头部「本日消耗」同一区间 |
 | **单价** | 当前时段的费率（峰谷动态） |
-| **时段** | 空闲还是高峰，以及判断依据 |
-| **数据来源** | 余额是从账号服务读的，还是走 API Key 兜底 |
+| **当前时段** | 空闲还是高峰，以及判断依据 |
+
+> 当年法定节假日数据未收录时，浮层还会多一行「节假日数据」作为警示；数据齐全时不显示。
 
 > **为什么"命中缓存"能占 99%**：每跑一步都要把整个上下文**重读一遍**，而重读全走缓存。
 > 上下文 24%（~220K），一轮 10 步就是 220 万次缓存读取 —— 而这一轮可能只花 ¥0.3。
@@ -203,7 +206,7 @@ dsh plugin --profile desktop remove dsh-balance-mini
 
 | 路径 | 说明 |
 |---|---|
-| `dsh-balance-mini-0.10.8.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
+| `dsh-balance-mini-0.11.2.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
 | `lib/` | 插件源码：`client.js`（浏览器端）、`index.js`（host 端）、`holidays.js` |
 | `README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
 | `INSTALL.md` | 安装与平台支持（含排查清单） |

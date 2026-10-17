@@ -98,13 +98,13 @@ const chip = (level, inner, attrs = "") =>
  * 本轮每步重置累加（跳动最明显），最活跃的数字落在最右边。
  */
 const chipFull = (balance, session, turn, level = "green", attrs = "") =>
-  chip(level, cell("余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
+  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
 /**
  * 三段始终占位：本轮算不出来时显示 "—"，**不省略**。
  * 省略会让数字左右横移（刚打开时两段、发消息后三段），看起来像坏了。
  */
 const chipFullDash = (balance, session, turn, level = "green", attrs = "") =>
-  chip(level, cell("余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
+  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
 
 const ctxMeter = `<span class="ctx"><span class="ring"></span><span>42%</span></span>`;
 
@@ -195,12 +195,12 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
 <div class="frame">
   <div class="dock">
     ${ctxMeter}
-    ${chipFull("¥554.13", "¥13.265", "¥0.095")}
+    ${chipFull("¥566.47", "¥13.265", "¥0.095")}
   </div>
 </div>
 <p class="note">
-  三段各带标签，避免混淆，按变化速度由慢到快排列：<b>余额</b>（账户充值余额，快照）· <b>会话累计</b>（本会话建立至今的累计）· <b>本轮消耗</b>（这一句话从发问到此刻的合计，跳动最明显）。<br>
-  三个圆点同色，按<b>余额分档</b>：≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰。<br>号码段前是 5px 状态块，后两段标签前是 5px 小方点（对齐原生胶囊"每段都有图标"的节奏）。<br>数值用等宽数字，且<b>不预留最小宽度</b> —— 预留会让标签与数字之间出现空白。
+  三段各带标签，避免混淆，按变化速度由慢到快排列：<b>总余额</b>（充值余额 + 赠金余额，快照）· <b>会话累计</b>（本会话建立至今的累计）· <b>本轮消耗</b>（这一句话从发问到此刻的合计，跳动最明显）。<br>
+  三个圆点同色，按<b>总余额分档</b>：≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰。<br>号码段前是 5px 状态块，后两段标签前是 5px 小方点（对齐原生胶囊"每段都有图标"的节奏）。<br>数值用等宽数字，且<b>不预留最小宽度</b> —— 预留会让标签与数字之间出现空白。
   三段<b>始终占位</b>：本轮还算不出来时显示 <code>—</code>，不整段省略 —— 避免数字左右横移（见下方 ④）。
 </p>
 
@@ -211,7 +211,7 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 12 L15.5 8.5" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
       <span class="np_label">337M tok<span class="np_sep">·</span>缓存命中 99%</span>
     </button></span>
-    ${chipFull("¥554.13", "¥13.265", "¥0.095")}
+    ${chipFull("¥566.47", "¥13.265", "¥0.095")}
   </div>
 </div>
 <p class="note">两边的分隔点应<b>大小、亮度、间距一致</b> —— 都用 <code>var(--dsw-alias-separator-primary)</code> 且 <code>margin:0 6px</code>，字号都用同一个 calc 表达式。</p>
@@ -220,26 +220,26 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
 <div class="frame">
   <div class="dock">
     ${ctxMeter}
-    ${chipFull("¥554.13", "¥13.265", "¥0.095", "green",
+    ${chipFull("¥566.47", "¥13.265", "¥0.095", "green",
       ' aria-expanded="true" style="background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)"')}
   </div>
   <div style="display:flex;justify-content:center;padding:4px 0 8px">
     <div class="${PANEL_CLASS}" style="position:static">
       <div class="bm-head">
-        <span class="bm-head-main">${WALLET_SVG}余额</span>
-        <span class="bm-head-value">¥554.13</span>
+        <span class="bm-head-main">${WALLET_SVG}总余额</span>
+        <span class="bm-head-value">¥566.47</span>
         <span class="bm-head-day">本日消耗 ¥1.842</span>
       </div>
       <div class="bm-head-rule"></div>
       <dl class="bm-details">
-        <dt>会话累计</dt><dd>¥13.265</dd>
+        <dt>充值余额</dt><dd>¥554.13</dd>
+        <dt>赠金余额（优先消耗）</dt><dd>¥12.34</dd>
         <dt>每轮平均消耗</dt><dd>¥0.158 · 84 轮</dd>
         <dt>会话累计 token</dt><dd>4.33亿</dd>
         <dt>会话命中缓存</dt><dd>4.31亿（99.4%）</dd>
         <dt>本日 token</dt><dd>12.9万</dd>
         <dt>单价（元/百万 token）</dt><dd>命中 0.02 · 未命中 1 · 输出 4</dd>
-        <dt>时段</dt><dd>空闲（非工作日或非高峰时段）</dd>
-        <dt>数据来源</dt><dd>DeepSeek 账号服务</dd>
+        <dt>当前时段</dt><dd>空闲（非工作日或非高峰时段）</dd>
       </dl>
       <div class="bm-rule"></div>
       <button type="button" style="font:inherit;color:inherit;background:0 0;border:none;padding:0;cursor:pointer">↻ 立即刷新</button>
@@ -257,7 +257,7 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
 <h2>④ 三段始终占位（无值显示 "—"）、余额分档、异常状态</h2>
 <div class="frame">
   <div class="dock">
-    ${chipFull("¥554.13", "¥13.265", "¥0.095")}
+    ${chipFull("¥566.47", "¥13.265", "¥0.095")}
     ${chipFull("¥42.10", "¥1.084", "¥0.021", "yellow")}
     ${chipFull("¥8.44", "¥0.124", "¥0.008", "red")}
   </div>
@@ -292,7 +292,7 @@ ${[13, 14, 15]
   .map(
     (px) => `  <div class="dock" style="--dsh-content-font-size-secondary:${px}px">
     <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 ${px}px<span class="np_sep">·</span>对照</span></button></span>
-    ${chipFull("¥554.13", "¥13.265", "¥0.095")}
+    ${chipFull("¥566.47", "¥13.265", "¥0.095")}
   </div>`,
   )
   .join("\n")}
@@ -316,22 +316,30 @@ const checks = [
   ["标签样式 .dsh-balance-mini-cap", /dsh-balance-mini-cap\{[^}]*margin-right:4px/.test(chipCss)],
   ["hover 文字变亮", /aria-expanded=true\]\{[^}]*color:var\(--dsw-alias-label-secondary\)/.test(chipCss)],
   ["颜色 token 无兜底", !/--dsw-alias-(separator-primary|label-tertiary|label-secondary|label-primary|interactive-bg-hover)\s*,/.test(chipCss)],
-  ["示例含三段标签", html.includes('balance-mini-cap">余额') && html.includes('balance-mini-cap">会话累计') && html.includes('balance-mini-cap">本轮消耗')],
+  ["示例含三段标签", html.includes('balance-mini-cap">总余额') && html.includes('balance-mini-cap">会话累计') && html.includes('balance-mini-cap">本轮消耗')],
   ["无值段显示占位 —", /balance-mini-cap">本轮消耗<\/span><span>—<\/span>/.test(html)],
-  ["三段顺序 余额→会话累计→本轮消耗", html.indexOf('balance-mini-cap">余额') < html.indexOf('balance-mini-cap">会话累计') && html.indexOf('balance-mini-cap">会话累计') < html.indexOf('balance-mini-cap">本轮消耗')],
+  ["三段顺序 总余额→会话累计→本轮消耗", html.indexOf('balance-mini-cap">总余额') < html.indexOf('balance-mini-cap">会话累计') && html.indexOf('balance-mini-cap">会话累计') < html.indexOf('balance-mini-cap">本轮消耗')],
   // 小方点三色必须都能渲染：缺 token 会让 var() 失败、圆点变透明（踩过）
   ["后两段小方点分别为蓝/淡紫（余额段用 5px 状态块）", /dot-sess\{background:var\(--dsw-static-deepseek-400\)\}/.test(chipCss)
     && /dot-turn\{background:#a78bfa\}/.test(chipCss)],
   ["预览页已定义圆点所需 token（缺了圆点会变透明）", /--dsw-alias-state-success-primary: #22c55e/.test(html)
     && /--dsw-static-deepseek-400: #7aaaff/.test(html)],
   // ── 浮层头部（对齐官方弹窗：图标 + 名称 + 主数值 + 分割线）──
-  ["浮层头部为「图标 + 余额 + 金额」", /class="bm-head"/.test(html) && /class="bm-head-main"/.test(html) && /class="bm-head-value"/.test(html)],
+  ["浮层头部为「图标 + 总余额 + 金额」", /class="bm-head"/.test(html) && /class="bm-head-main"/.test(html) && /class="bm-head-value"/.test(html)],
   ["头部含图标（svg）", /<svg[^>]*viewBox="0 0 16 16"/.test(html)],
   ["头部下有一条分割线", /class="bm-head-rule"/.test(html)],
   // 分割线必须用主题真实值 —— 之前填的是估的 rgba(128,128,128,.24)，预览与实机不一致
   ["分割线 token 为真实值 #ffffff1f（官方用 border-l2）", /--dsw-alias-border-l2: #ffffff1f/.test(html)],
   // 头部已放「余额」与「本日」，正文不该再重复
   ["浮层正文不含余额行", !/<dt>余额<\/dt>/.test(html)],
+  // 正文必须含账号的第二个钱包（赠金）。它与头部的「余额」（充值余额）是两个数，
+  // 官方账号设置页也是并列展示的 —— 这条断言防的是"又把赠金漏掉"。
+  ["浮层第一排为「充值余额」（标题是总余额，正文是构成）", /<dt>充值余额<\/dt>/.test(html)],
+  ["浮层含「赠金余额（优先消耗）」行（账号的第二个钱包）", /<dt>赠金余额（优先消耗）<\/dt>/.test(html)],
+  // 节假日数据只在**缺数据**时出现（警示），数据齐全时不显示；示例是齐全状态，故应缺席
+  ["浮层不含「节假日数据」行（数据齐全时不显示）", !/<dt>节假日数据<\/dt>/.test(html)],
+  ["浮层不含「数据来源」行（已移除）", !/<dt>数据来源<\/dt>/.test(html)],
+  ["时段行标签为「当前时段」", /<dt>当前时段<\/dt>/.test(html)],
   ["浮层正文不含本日消耗行（已在头部）", !/<dt>本日消耗<\/dt>/.test(html)],
 ];
 console.log(`  已生成 ${outPath}`);

@@ -20,7 +20,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 
 | 数 | 含义 | 口径 |
 |---|---|---|
-| **余额** | 账户充值余额 | 快照值，不含赠送余额 |
+| **总余额** | 账户可用总额 = **充值余额 + 赠金余额** | 快照值。浮层标题也是它；正文前两行是构成：第一排「充值余额」、第二排「赠金余额」 |
 | **会话累计** | 本会话建立至今的累计 | 官方 `tokenUsage.totals` |
 | **本轮消耗** | **你这一句话花了多少** —— 从发出到此刻的合计 | `当前 totals − 本轮起点的 totals`，实时累加，答完停住 |
 
@@ -33,6 +33,9 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 特点
 
 - **实时**：余额与会话累计 15 秒一轮；**「本轮消耗」2 秒一轮** —— 回答过程中能看到它在涨
+- **胶囊看总额、浮层看构成**：胶囊上是**总余额**（充值 + 赠金）—— 一眼知道还有多少钱；
+  展开浮层看构成：标题「总余额」，正文第一排「充值余额」、第二排「赠金余额（优先消耗）」。赠金是会过期的那部分，
+  官方规则是**先扣赠金**；没有赠金时显示 `—`
 - **本日消耗汇总当天所有会话**：扫会话日志按事件时间求和，不是只看当前会话
 - **峰谷自适应**：单价按官方规则实时切换（高峰 = 工作日 9-12 / 14-18 点；法定节假日全天按空闲）
 - **外观对齐原厂**：字号、字重、行高、内边距、分割线**逐条抄自官方 CSS 模块**，不是估的（见「实现要点」）
@@ -44,7 +47,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.10.8.tgz
+dsh plugin --profile desktop add dsh-balance-mini-0.11.2.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -66,11 +69,11 @@ node tools/gen-preview.mjs      # 生成 docs/preview.html
 > 解压会话日志，该 API 自 Node 22.15.0 起提供。（DSH 桌面版内置的是 Node 24，满足。）
 
 ```bash
-node tools/selftest.mjs         # 57 项  host 端到端（余额、计费、回环校验、换轮基准）
-node tools/render-test.mjs .    # 85 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
+node tools/selftest.mjs         # 68 项  host 端到端（余额、计费、回环校验、换轮基准）
+node tools/render-test.mjs .    # 99 项  渲染（金额精度、标签配对、胶囊可见性、面板结构）
 node tools/heartbeat-test.mjs . #  6 项  心跳独立于组件、节奏参数
 node tools/refresh-test.mjs .   # 13 项  「立即刷新」的排队与补发
-node tools/gen-preview.mjs      # 19 项  预览页自检
+node tools/gen-preview.mjs      # 24 项  预览页自检
 ```
 
 退出码 0 即全部通过。CI 在 Node 22 / 24 上跑（[.github/workflows/tests.yml](./.github/workflows/tests.yml)）。
@@ -181,10 +184,10 @@ C:\Users\<user>\.dsh\profiles\desktop\
 
 ```bash
 # macOS / Linux
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.10.8.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.2.tgz
 
 # Windows (PowerShell)
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.8.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.2.tgz"
 ```
 
 把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。
@@ -197,7 +200,9 @@ dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.10.8.tgz"
 
 | 显示项 | 来源 | 说明 |
 |---|---|---|
-| 余额 | `ctx.deepseekAccount.getBalance(client)` | DSH 账号服务；已处理凭据读取、Platform 的五个 `x-client-*` 头、余额超时与 401 失效。兜底可走 `GET api.deepseek.com/user/balance`（API Key 账号）。**是充值余额，不含赠送余额** |
+| 总余额 | 下面两者之和（host 计算） | 胶囊与浮层标题都显示它。账号侧返回的是 `normal_wallets` 与 `bonus_wallets` **两个并列钱包**，`total` 由插件相加得出；赠金缺省时就等于充值余额 |
+| 充值余额 | `ctx.deepseekAccount.getBalance(client)` 的 `normal_wallets` | DSH 账号服务；已处理凭据读取、Platform 的五个 `x-client-*` 头、余额超时与 401 失效。兜底可走 `GET api.deepseek.com/user/balance`（API Key 账号，那里 `total_balance` 本身就是总额）。**浮层正文第一排显示的就是这个数** |
+| 赠金余额 | 同上返回值的 `bonusWallets` | 账号的**第二个钱包**（送的那部分，会过期）。官方账号设置页并列展示「充值余额 / 赠金余额」；本插件放在浮层正文第二排，没有时显示 `—`。**官方扣费规则：两种余额同时存在时优先扣减赠送余额**（[文档](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)），所以行标签写作「赠金余额（优先消耗）」 |
 | 会话累计 | `ctx.sessionProjections.stateOf(session, "tokenUsage")` 的 `totals` | 官方 `@deepseek-ai/dsh-token-meter` 注册的会话投影 |
 | **本轮消耗** | `当前 totals − 本轮起点 totals` | **本插件补出来的口径**。官方只有 `totals`（整会话）与 `last`（最近一步），没有"一轮合计"。做法：在 `turn/start` 事件记下当时的 `totals` 作基准（按会话存 `WeakMap`），每次请求做差 |
 | 每轮平均消耗 | 会话累计 ÷ `sessionStats.turns` | 官方 `session-stats` 投影提供轮数。这是现有数据下唯一能回答"一句话大约多少钱"的数 |
@@ -268,9 +273,12 @@ const peak = weekday && inPeak && !holiday;
 > 把输出填进 `STATUTORY_HOLIDAYS` 对应年份即可。
 
 **未收录的年份会自动回退**：`isStatutoryHoliday()` 返回 `false`，退化为"仅按工作日 + 时段"
-判断，不会报错，只是那年的法定节假日会偏高估约一倍。展开浮层里的「时段」一行会写出
+判断，不会报错，只是那年的法定节假日会偏高估约一倍。展开浮层里的「当前时段」一行会写出
 判断依据（`空闲（法定节假日全天）` / `空闲（非工作日或非高峰时段）` / `高峰（工作日 9-12 / 14-18点）`），
 便于直接核对。
+
+> 数据缺失的那一年，浮层里会**额外多出一行「节假日数据」**（`本年未收录 · 节假日期间费用可能偏高`）
+> —— 只在缺数据时出现，数据齐全时不显示：这一行的意义是警示，不是汇报"一切正常"。
 
 > **另一层近似（无法消除）**：`tokenUsage` 投影给的是**累计总数**，把不同时段的用量
 > 加总在一起了。所以跨时段的长会话，累计金额是按"当前时刻的费率"折算的近似值。
