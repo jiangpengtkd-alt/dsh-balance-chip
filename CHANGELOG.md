@@ -2,6 +2,22 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.13.2
+
+文档：安装以 **GitHub 下载** 为主，**不再发布到 npm**。
+
+原因：本机网络下 `www.npmjs.com` 被 Cloudflare 人机验证挡住
+（`HTTP 403` + `Cf-Mitigated: challenge`，页面停在 "Just a moment..."），
+而 `registry.npmjs.org` 是通的 —— 缺的正好是网页端注册账号/管理令牌这一环。
+为一个"一条命令装"的便利去跟 CDN 较劲不值得，于是：
+
+- 安装一律走 tgz（仓库内 `releases/` 或 GitHub Releases），**装的过程不需要联网、不需要账号**
+- INSTALL 原来的「方式 3：发布到 npm」换成「方式 3：从 GitHub Releases 下载」
+- `package.json` 的 `publishConfig` 保留 —— 将来想发 npm 时不用再改这里，但文档不再承诺这件事
+
+顺带修掉 README 快速开始的一个断头路：原来直接给 `add dsh-balance-chip-<版本>.tgz`，
+却没告诉人 tgz 从哪来。现在明确写成两步（先下载、再 add）。
+
 ## 0.13.1
 
 时段段补一个**小方点**（按实机反馈）。

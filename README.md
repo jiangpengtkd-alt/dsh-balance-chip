@@ -51,12 +51,21 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 
 ## 快速开始
 
+**1）拿到 tgz** —— 从 [Releases](https://github.com/jiangpengtkd-alt/dsh-balance-chip/releases)
+下载最新的 `dsh-balance-chip-<版本>.tgz`（或直接用仓库里 [`releases/`](./releases) 目录中的那一份）。
+
+**2）装**：
+
 ```bash
 dsh plugin --profile desktop add dsh-balance-chip-<版本>.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
-发版包在 [`releases/`](./releases)，完整安装说明与排查清单见 [INSTALL.md](./INSTALL.md)。
+
+> 本插件**没有发布到 npm** —— 安装一律走 tgz，不依赖任何账号；
+> 装的过程也不需要联网（只有下载 tgz 那一步要）。
+
+完整安装说明与排查清单见 [INSTALL.md](./INSTALL.md)。
 
 **想先看效果、不用装**：
 

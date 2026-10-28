@@ -132,21 +132,18 @@ dsh plugin --profile desktop add "D:\plugins\dsh-balance-chip"
 dsh plugin --profile desktop add ~/dsh-plugins/dsh-balance-chip
 ```
 
-### 方式 3：发布到 npm —— 之后一行命令装，且可更新
+### 方式 3：从 GitHub Releases 下载 —— 给别人最省事的一条
 
-包名 `dsh-balance-chip` 目前在 npm 上**未被占用**。若你有 npm 账号：
-
-```bash
-# 在插件目录里执行
-npm login
-npm publish          # package.json 里 publishConfig.access 已是 public
-```
-
-之后任何一台电脑上（需联网）：
+每次发版都会把 `dsh-balance-chip-<版本>.tgz` 挂到
+[Releases](https://github.com/jiangpengtkd-alt/dsh-balance-chip/releases)。
+下载后直接 `add`，装的过程不需要联网、也不需要任何账号：
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-chip
+dsh plugin --profile desktop add <下载路径>/dsh-balance-chip-<版本>.tgz
 ```
+
+> **本插件不发布到 npm。** 安装一律走 tgz（仓库内 `releases/` 或 GitHub Releases），
+> 所以不存在"包名被占""需要 npm 账号""registry 访问受限"这些问题。
 
 ---
 
