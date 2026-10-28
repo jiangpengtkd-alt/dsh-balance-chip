@@ -242,7 +242,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));        // ✓
 ## 复现命令
 
 ```bash
-gh repo clone jiangpengtkd-alt/dsh-balance-mini && cd dsh-balance-mini
+gh repo clone jiangpengtkd-alt/dsh-balance-chip && cd dsh-balance-chip
 
 # zip 条目名（应为 0 反斜杠）
 python3 -c "import zipfile;z=zipfile.ZipFile('releases/dsh-balance-mini-0.10.5.zip');\

@@ -1,6 +1,6 @@
 # dsh-balance-chip
 
-[![tests](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml/badge.svg)](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml)
+[![tests](https://github.com/jiangpengtkd-alt/dsh-balance-chip/actions/workflows/tests.yml/badge.svg)](https://github.com/jiangpengtkd-alt/dsh-balance-chip/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A522.15.0-informational.svg)](./INSTALL.md)
 

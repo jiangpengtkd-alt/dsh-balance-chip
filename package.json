@@ -7,11 +7,11 @@
   "author": "jiangpengtkd-alt (https://github.com/jiangpengtkd-alt)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jiangpengtkd-alt/dsh-balance-mini.git"
+    "url": "git+https://github.com/jiangpengtkd-alt/dsh-balance-chip.git"
   },
-  "homepage": "https://github.com/jiangpengtkd-alt/dsh-balance-mini#readme",
+  "homepage": "https://github.com/jiangpengtkd-alt/dsh-balance-chip#readme",
   "bugs": {
-    "url": "https://github.com/jiangpengtkd-alt/dsh-balance-mini/issues"
+    "url": "https://github.com/jiangpengtkd-alt/dsh-balance-chip/issues"
   },
   "main": "lib/index.js",
   "exports": {
