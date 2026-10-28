@@ -259,7 +259,10 @@ if (!CHECK_ONLY) {
   else { console.log(`  ✗ ${TGZ_NAME} 未生成`); process.exit(1); }
 
   // ② zip：手写，条目名正斜杠
-  const prefix = `dsh-balance-mini-${VERSION}`;
+  // zip 内的顶层目录名同样从包名派生 —— 这里曾写死旧包名，导致 zip 文件叫
+  // dsh-balance-chip-0.12.0.zip、解压出来却是 dsh-balance-mini-0.12.0/。
+  // `--check` 发现不了它：断言是拿产物和自己比，前后一致就通过。
+  const prefix = `${pkg.name}-${VERSION}`;
   const entries = [];
   for (const f of ZIP_INCLUDE) {
     entries.push({ name: `${prefix}/${f}`, data: readFileSync(join(ROOT, f)) });
