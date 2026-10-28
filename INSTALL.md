@@ -145,6 +145,24 @@ dsh plugin --profile desktop add <下载路径>/dsh-balance-chip-<版本>.tgz
 > **本插件不发布到 npm。** 安装一律走 tgz（仓库内 `releases/` 或 GitHub Releases），
 > 所以不存在"包名被占""需要 npm 账号""registry 访问受限"这些问题。
 
+### 校验安装包（建议）
+
+每个 Release 附带 `SHA256SUMS.txt`。下载后核对，与页面上的值一致再装：
+
+```powershell
+# Windows
+Get-FileHash .\dsh-balance-chip-<版本>.tgz -Algorithm SHA256
+```
+
+```bash
+# macOS / Linux
+sha256sum dsh-balance-chip-<版本>.tgz
+```
+
+**只从本仓库的 Releases 下载。** 插件会读取本机 `~/.dsh/.credentials.yaml` 做余额兜底
+查询，凭据只发往 DeepSeek 官方接口；**被改过的副本不受此保证** —— 这也正是要核对
+哈希的原因。
+
 ---
 
 ## 三、关于 `--profile`

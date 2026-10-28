@@ -75,6 +75,33 @@ node tools/gen-preview.mjs      # 生成 docs/preview.html
 
 打开 `docs/preview.html` —— 里面把**原厂胶囊**与本插件胶囊并排渲染，可直接比对样式。
 
+## 安全边界与下载来源
+
+**只从本仓库的 [Releases](https://github.com/jiangpengtkd-alt/dsh-balance-chip/releases) 下载安装包。**
+
+本插件会读取本机 `~/.dsh/.credentials.yaml`，用于账号服务不可用时直连
+`api.deepseek.com/user/balance` 的兜底查询。凭据只会发往 DeepSeek 官方接口，
+不会写入日志、不会返回给浏览器、不会发往任何第三方 —— **但这个保证只适用于本仓库
+发布的原版**。被改过的副本（fork、二次打包、第三方网盘）不受此保证。
+
+每个 Release 附带 `SHA256SUMS.txt`，下载后可自行核对：
+
+```powershell
+# Windows
+Get-FileHash .\dsh-balance-chip-<版本>.tgz -Algorithm SHA256
+```
+
+```bash
+# macOS / Linux
+sha256sum dsh-balance-chip-<版本>.tgz
+```
+
+与 Release 页面上的值一致即可。
+
+其他边界：**零依赖**、无 `install` / `postinstall` 脚本；运行时**对磁盘只读**
+（不写任何文件）；HTTP 路由只接受回环地址（`127.0.0.1`）的请求。
+
+
 ## 测试
 
 五套测试全是纯 Node、零依赖、**不联网**，也不用启动 DSH。
