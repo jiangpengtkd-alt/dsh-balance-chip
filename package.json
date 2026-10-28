@@ -1,9 +1,18 @@
 {
   "name": "dsh-balance-mini",
-  "version": "0.11.5",
+  "version": "0.11.6",
   "description": "DSH web GUI plugin: shows DeepSeek account balance and per-session/turn cost next to the context meter, priced with DeepSeek peak/off-peak rules (weekday hours, weekends and PRC statutory holidays). Host-side reads only; the balance is read from the local DSH account service (falls back to api.deepseek.com when that is unavailable, sending only the locally configured API key).",
   "type": "module",
   "license": "MIT",
+  "author": "jiangpengtkd-alt (https://github.com/jiangpengtkd-alt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jiangpengtkd-alt/dsh-balance-mini.git"
+  },
+  "homepage": "https://github.com/jiangpengtkd-alt/dsh-balance-mini#readme",
+  "bugs": {
+    "url": "https://github.com/jiangpengtkd-alt/dsh-balance-mini/issues"
+  },
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
@@ -15,6 +24,7 @@
     "CHANGELOG.md",
     "INSTALL.md",
     "LICENSE",
+    "QUICKSTART.md",
     "README.md",
     "cordis.patch.yml",
     "docs/preview.html",

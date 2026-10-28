@@ -471,6 +471,9 @@ console.log("\n  ── 场景 11：本日消耗的取数路径 ──");
   // 14:00/18:00 四个边界上，在没有任何新用量的情况下翻倍或腰斩。
   ck(/rateAt\(event\.time\)/.test(src), "本日消耗按事件时间逐条计价");
   ck(!/priceBuckets\(totals, priceRateNow\(\)\)/.test(src), "没有回退成「全天 token × 当前单价」");
+  // 回归：会话日志文件名带格式版本，不能写死 v4 —— 否则 DSH 升格式后本日消耗会无声变空。
+  ck(/const sessionLogFile = /.test(src), "存在 sessionLogFile（按版本探测日志文件）");
+  ck(!/join\(cacheRoot, ws, id, "session\.v4\.jsonl\.zstd"\)/.test(src), "没有写死 session.v4 文件名");
 }
 
 // ── 场景 12：时段边界（确定性 —— 固定时间戳，不依赖运行时刻与机器时区）──

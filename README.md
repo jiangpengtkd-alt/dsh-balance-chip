@@ -5,7 +5,6 @@
 [![node](https://img.shields.io/badge/node-%E2%89%A522.15.0-informational.svg)](./INSTALL.md)
 
 > 版本号见 [package.json](./package.json) 与 [CHANGELOG.md](./CHANGELOG.md)。
-> （这里原先是写死的版本徽章，改版本时忘了同步，现已去掉那个会漂移的字段。）
 
 DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **DeepSeek 余额** 与 **消费**，点击可展开明细。
 
@@ -158,7 +157,7 @@ profile 侧用 link 依赖指向它，不需要把代码拷进 profile 目录：
 
 | 平台 | 状态 | 已验证的组合 |
 |---|---|---|
-| **Windows x64** | ✅ 实机验证 | win32-x64 + DSH 0.2.0-rc.2（Node 24.18.1） |
+| **Windows x64** | ✅ 实机验证 | win32-x64 + DSH 0.2.0-rc.2 / 0.2.1-rc.3（Node 24.18.1） |
 | **macOS arm64** | ✅ 实机验证 | darwin-arm64 + DSH 0.2.0-rc.2（Node 24.18.1） |
 | macOS x64 / Linux | 预期可用 | 同一份代码，未单独验证 |
 

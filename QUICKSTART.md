@@ -40,7 +40,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **�
 { "platform": "darwin", "arch": "arm64", "release": { "version": "0.2.0-rc.2", "nodeVersion": "24.18.1" } }
 ```
 
-已实测验证的组合：**darwin-arm64 + DSH 0.2.0-rc.2**（macOS）、**win32-x64 + DSH 0.2.0-rc.2**（Windows）。
+已实测验证的组合：**darwin-arm64 + DSH 0.2.0-rc.2**（macOS）、**win32-x64 + DSH 0.2.0-rc.2 / 0.2.1-rc.3**（Windows）。
 
 ---
 
@@ -216,4 +216,8 @@ dsh plugin --profile desktop remove dsh-balance-mini
 | `更新记录.md` | 完整版本历史，同 `CHANGELOG.md` |
 | `docs/preview.html` | 样式预览（由 `tools/gen-preview.mjs` 从源码生成） |
 | `tools/` | 五套测试 + 打包脚本 `pack-release.mjs` |
+
+> **zip 与 tgz 的分工**：`dsh plugin add` 只需要 tgz —— 它是最小安装包，只含运行所需文件。
+> zip 是给人看的下载包，额外包含四份中文文档、`docs/audits/` 和里面的那个 tgz。
+> 两者内容同源，`tools/pack-release.mjs --check` 会逐字节校验，不会各走各的。
 
