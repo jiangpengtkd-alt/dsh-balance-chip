@@ -443,6 +443,73 @@ ck(/\blv-/.test(chipClass), "胶囊带余额分档类（lv-*）", chipClass);
   ck(cls(rich) !== cls(poor), "不同余额得到不同分档（不是恒定档位）");
 }
 
+// ── ④ 时段结论常驻在胶囊上（空闲 / 高峰 / 假日 / —）──
+//
+// 三条设计约束，任何一条破了在实机上都看得出来：
+//   1. 四种状态都是**两字** → 宽度恒定，时段切换时右边元素不会横移
+//   2. 颜色是**状态**语义（空闲=成功绿、高峰=警告橙），只给文字上色，**不加小方点** ——
+//      加了会与"三段各一色"的段标识混淆（余额段前面已有 6px 状态点）
+//   3. 字号必须 font:inherit，不能写 px —— 0.11.1 就栽在写死 12px 上
+{
+  const tierOf = (r) => {
+    const walk = (n) => {
+      if (!n || typeof n !== "object") return null;
+      const cls = String((n.p && n.p.className) || "");
+      if (cls.includes("dsh-balance-mini-tier")) return n;
+      for (const c of n.k || []) { const hit = walk(c); if (hit) return hit; }
+      return null;
+    };
+    return r.btn ? walk(r.btn) : null;
+  };
+  const snap = (cost) => renderWith({ configured: true, total: 999, cost });
+  const idleT = tierOf(snap({ total: 1, peak: false }));
+  const peakT = tierOf(snap({ total: 1, peak: true }));
+  const holidayT = tierOf(snap({ total: 1, peak: false, holiday: true }));
+  const noneT = tierOf(snap(undefined));
+  const txt = (n) => (n ? n.k.join("") : "(缺)");
+  const clsOfT = (n) => (n ? String(n.p.className) : "");
+
+  ck(txt(idleT) === "空闲", "时段=空闲 → 胶囊上显示「空闲」", txt(idleT));
+  ck(txt(peakT) === "高峰", "时段=高峰 → 胶囊上显示「高峰」", txt(peakT));
+  ck(txt(holidayT) === "假日", "法定节假日 → 显示「假日」（按空闲计价）", txt(holidayT));
+  ck(txt(noneT) === "—", "拿不到时段 → 显示「—」而不是省略这一段", txt(noneT));
+
+  ck(/\bidle\b/.test(clsOfT(idleT)), "空闲用 idle 类（成功绿）", clsOfT(idleT));
+  ck(/\bpeak\b/.test(clsOfT(peakT)), "高峰用 peak 类（警告橙）", clsOfT(peakT));
+  ck(/\bidle\b/.test(clsOfT(holidayT)) && !/\bpeak\b/.test(clsOfT(holidayT)), "假日按空闲着色（不显示成高峰）", clsOfT(holidayT));
+
+  // 顺序：时段必须是最后一个子节点（三段数字之后）
+  {
+    const btn = snap({ total: 1, peak: true }).btn;
+    const last = btn ? btn.k[btn.k.length - 1] : null;
+    ck(!!last && String((last.p && last.p.className) || "").includes("dsh-balance-mini-tier"),
+      "时段段位于胶囊末尾（三段数字之后）");
+  }
+
+  // 无障碍标签也要念出时段
+  {
+    const btn = snap({ total: 1, peak: true }).btn;
+    const aria = btn ? String((btn.p && (btn.p["aria-label"] || btn.p.ariaLabel)) || "") : "";
+    ck(aria.includes("时段") && aria.includes("高峰"), "aria-label 包含时段结论", aria.slice(0, 90));
+  }
+
+  // CSS：字号继承 + 官方语义 token + 不写死 px
+  //
+  // ⚠️ 这里直接读源码文件，不用文件后半段的 clientSrc/codeOnly —— 那些 const 在本块之后
+  // 才初始化，提前访问会踩 TDZ（一开始就踩了）。本块的判据足够具体，注释不会误命中。
+  const cssSrc = readFileSync(new URL("../lib/client.js", import.meta.url), "utf8");
+  const tierCss = (cssSrc.match(/\.dsh-balance-mini-tier[^}]*\}/g) ?? []).join(" ");
+  ck(/font:inherit/.test(tierCss) && /line-height:inherit/.test(tierCss),
+    "时段段继承字号与行高（不写死 px —— 0.11.1 就栽在这）", tierCss.slice(0, 110));
+  ck(!/dsh-balance-mini-tier[^}]*font-size:\s*\d+px/.test(tierCss), "时段段没有写死 font-size");
+  ck(/\.dsh-balance-mini-tier\.idle\{color:var\(--dsw-alias-state-success-primary\)\}/.test(tierCss),
+    "空闲用官方成功绿 token", tierCss.slice(0, 110));
+  ck(/\.dsh-balance-mini-tier\.peak\{color:var\(--dsw-alias-state-warn-primary\)\}/.test(tierCss),
+    "高峰用官方警告橙 token", tierCss.slice(0, 110));
+  // 不加小方点：时段段里不应出现 minidot
+  ck(!/minidot/.test(String((peakT && peakT.p && peakT.p.className) || "")), "时段段不带小方点（避免与段标识混淆）");
+}
+
 // ── 标签↔数值必须**成对相邻** ──
 // 变异实测：把「会话累计」的标题改成「本轮消耗」，原断言全过，
 // 因为文本是子节点 join("") 出来的，位置信息被抹平。

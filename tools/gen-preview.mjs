@@ -93,18 +93,23 @@ const chip = (level, inner, attrs = "") =>
   `<button class="${CHIP_CLASS} ready lv-${level}" type="button"${attrs}>` +
   `<span class="dsh-balance-mini-dot"></span>${inner}</button>`;
 /**
- * 三段完整胶囊，顺序与组件一致：余额 · 会话累计 · 本轮消耗。
- * 按「变化速度」由慢到快排列 —— 余额 60 秒刷新，会话每步递增，
- * 本轮每步重置累加（跳动最明显），最活跃的数字落在最右边。
+ * 时段结论（④）：空闲 / 高峰 / 假日。对应组件的 tierText —— 颜色是状态语义
+ * （空闲=成功绿、高峰=警告橙），所以**不加**小方点，只给文字上色。
  */
-const chipFull = (balance, session, turn, level = "green", attrs = "") =>
-  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
+const TIER = (text, kind) => `<span class="dsh-balance-mini-tier ${kind}">${text}</span>`;
 /**
- * 三段始终占位：本轮算不出来时显示 "—"，**不省略**。
- * 省略会让数字左右横移（刚打开时两段、发消息后三段），看起来像坏了。
+ * 完整胶囊，顺序与组件一致：总余额 · 会话累计 · 本轮消耗 · 时段。
+ * 前三个数字按「变化速度」由慢到快排列 —— 余额 60 秒刷新，会话每步递增，
+ * 本轮每步重置累加（跳动最明显），最活跃的数字落在最右边；时段是状态标签，放最后。
  */
-const chipFullDash = (balance, session, turn, level = "green", attrs = "") =>
-  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn"), attrs);
+const chipFull = (balance, session, turn, level = "green", attrs = "", tier = "空闲", tierKind = "idle") =>
+  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn") + SEP + TIER(tier, tierKind), attrs);
+/**
+ * 每一段都始终占位：数字算不出来时显示 "—"，时段拿不到时同样显示 "—"，**都不省略**。
+ * 省略会让宽度在时段边界上周期性变化，右边元素跟着横移，看起来像坏了。
+ */
+const chipFullDash = (balance, session, turn, level = "green", attrs = "", tier = "空闲", tierKind = "idle") =>
+  chip(level, cell("总余额", balance) + SEP + cell("会话累计", session, "dot-sess") + SEP + cell("本轮消耗", turn, "dot-turn") + SEP + TIER(tier, tierKind), attrs);
 
 const ctxMeter = `<span class="ctx"><span class="ring"></span><span>42%</span></span>`;
 
@@ -264,7 +269,26 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
     ${chipFull("¥8.44", "¥0.124", "¥0.008", "red")}
   </div>
 </div>
-<p class="note">正常三态：圆点颜色按余额分档（≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰）。</p>
+<p class="note">正常三态：圆点颜色按余额分档（≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰）。末尾是时段结论。</p>
+
+<h2>④b 时段结论：空闲 / 高峰 / 假日</h2>
+<p class="note">
+  时段决定单价是 1 倍还是 2 倍，所以常驻在胶囊上，不必点开浮层。<br>
+  <b>空闲</b>用成功绿（便宜）、<b>高峰</b>用警告橙（贵一倍，是提醒不是错误）——与浮层底排同一组语义 token。<br>
+  <b>假日</b>按空闲计价（官方规则：法定节假日全天算空闲），但仍单独显示，否则用户会以为节假日被算错了。
+</p>
+<div class="frame">
+  <div class="dock" style="flex-direction:column;gap:2px;align-items:center">
+    <div class="cap-note">空闲时段（非工作日 / 工作日非高峰）</div>
+    ${chipFull("¥566.47", "¥13.265", "¥0.095", "green", "", "空闲", "idle")}
+    <div class="cap-note">高峰时段（工作日 9–12 / 14–18）</div>
+    ${chipFull("¥566.47", "¥13.265", "¥0.095", "green", "", "高峰", "peak")}
+    <div class="cap-note">法定节假日（按空闲计价）</div>
+    ${chipFull("¥566.47", "¥13.265", "¥0.095", "green", "", "假日", "idle")}
+    <div class="cap-note">拿不到时段信息（仍占位，不省略）</div>
+    ${chipFull("¥566.47", "¥13.265", "¥0.095", "green", "", "—", "idle")}
+  </div>
+</div>
 
 <p class="note" style="margin-top:16px">
   <b>关键：位置必须稳定。</b>下面是同一个会话从「刚打开」到「本轮跑起来」的连续状态 ——

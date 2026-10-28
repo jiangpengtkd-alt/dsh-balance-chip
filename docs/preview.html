@@ -92,6 +92,9 @@
   .dsh-balance-mini-chip .dsh-balance-mini-gap{flex:none;width:6px}
   .dsh-balance-mini-chip .dsh-balance-mini-cap{color:var(--dsw-alias-label-tertiary);margin-right:4px}
   .dsh-balance-mini-chip .dsh-balance-mini-cap+span{transition:color .15s;font-variant-numeric:tabular-nums}
+  .dsh-balance-mini-chip .dsh-balance-mini-tier{font:inherit;line-height:inherit;white-space:nowrap}
+  .dsh-balance-mini-chip .dsh-balance-mini-tier.idle{color:var(--dsw-alias-state-success-primary)}
+  .dsh-balance-mini-chip .dsh-balance-mini-tier.peak{color:var(--dsw-alias-state-warn-primary)}
   .dsh-balance-mini-panel{z-index:1100;box-sizing:border-box;padding:16px;border-radius:var(--dsw-radius-lg,10px);background:var(--dsw-specific-menu,#1b1e26);backdrop-filter:var(--dsw-menu-backdrop-filter,none);box-shadow:var(--dsw-elevation-prominent,0 6px 24px rgba(0,0,0,.35));color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;width:max-content;min-width:min(300px,calc(100vw - 24px));max-width:min(440px,calc(100vw - 24px));cursor:default}
   .dsh-balance-mini-panel .bm-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px;color:var(--dsw-alias-label-primary);font-weight:500}
   .dsh-balance-mini-panel .bm-head-main{display:inline-flex;align-items:center;gap:6px;flex:none}
@@ -124,7 +127,7 @@
 <div class="frame">
   <div class="dock">
     <span class="ctx"><span class="ring"></span><span>42%</span></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
 </div>
 <p class="note">
@@ -140,7 +143,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 12 L15.5 8.5" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
       <span class="np_label">337M tok<span class="np_sep">·</span>缓存命中 99%</span>
     </button></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
 </div>
 <p class="note">两边的分隔点应<b>大小、亮度、间距一致</b> —— 都用 <code>var(--dsw-alias-separator-primary)</code> 且 <code>margin:0 6px</code>，字号都用同一个 calc 表达式。</p>
@@ -149,7 +152,7 @@
 <div class="frame">
   <div class="dock">
     <span class="ctx"><span class="ring"></span><span>42%</span></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button" aria-expanded="true" style="background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button" aria-expanded="true" style="background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
   <div style="display:flex;justify-content:center;padding:4px 0 8px">
     <div class="dsh-balance-mini-panel" style="position:static">
@@ -187,12 +190,31 @@
 <h2>④ 三段始终占位（无值显示 "—"）、余额分档、异常状态</h2>
 <div class="frame">
   <div class="dock">
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
-    <button class="dsh-balance-mini-chip ready lv-yellow" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥42.10</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥1.084</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span></button>
-    <button class="dsh-balance-mini-chip ready lv-red" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥8.44</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥0.124</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.008</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
+    <button class="dsh-balance-mini-chip ready lv-yellow" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥42.10</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥1.084</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
+    <button class="dsh-balance-mini-chip ready lv-red" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥8.44</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥0.124</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.008</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
 </div>
-<p class="note">正常三态：圆点颜色按余额分档（≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰）。</p>
+<p class="note">正常三态：圆点颜色按余额分档（≥100 绿 · 20–99 黄 · 1–19 红 · 其他灰）。末尾是时段结论。</p>
+
+<h2>④b 时段结论：空闲 / 高峰 / 假日</h2>
+<p class="note">
+  时段决定单价是 1 倍还是 2 倍，所以常驻在胶囊上，不必点开浮层。<br>
+  <b>空闲</b>用成功绿（便宜）、<b>高峰</b>用警告橙（贵一倍，是提醒不是错误）——与浮层底排同一组语义 token。<br>
+  <b>假日</b>按空闲计价（官方规则：法定节假日全天算空闲），但仍单独显示，否则用户会以为节假日被算错了。
+</p>
+<div class="frame">
+  <div class="dock" style="flex-direction:column;gap:2px;align-items:center">
+    <div class="cap-note">空闲时段（非工作日 / 工作日非高峰）</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
+    <div class="cap-note">高峰时段（工作日 9–12 / 14–18）</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier peak">高峰</span></button>
+    <div class="cap-note">法定节假日（按空闲计价）</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">假日</span></button>
+    <div class="cap-note">拿不到时段信息（仍占位，不省略）</div>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">—</span></button>
+  </div>
+</div>
 
 <p class="note" style="margin-top:16px">
   <b>关键：位置必须稳定。</b>下面是同一个会话从「刚打开」到「本轮跑起来」的连续状态 ——
@@ -201,13 +223,13 @@
 <div class="frame">
   <div class="dock" style="flex-direction:column;gap:2px;align-items:center">
     <div class="cap-note">刚打开 DSH（本轮还没开始）</div>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
     <div class="cap-note">本轮刚开始，基准已建立</div>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
     <div class="cap-note">本轮累积中</div>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.270</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥553.51</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.270</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.021</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
     <div class="cap-note">余额查询失败（三段仍占位）</div>
-    <button class="dsh-balance-mini-chip ready lv-gray" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>余额查询失败</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span></button>
+    <button class="dsh-balance-mini-chip ready lv-gray" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>余额查询失败</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>—</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
 </div>
 <p class="note">
@@ -220,15 +242,15 @@
 <div class="frame">
   <div class="dock" style="--dsh-content-font-size-secondary:13px">
     <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 13px<span class="np_sep">·</span>对照</span></button></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
   <div class="dock" style="--dsh-content-font-size-secondary:14px">
     <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 14px<span class="np_sep">·</span>对照</span></button></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
   <div class="dock" style="--dsh-content-font-size-secondary:15px">
     <span class="np_anchor"><button class="np_pill" type="button"><span class="np_label">原厂 15px<span class="np_sep">·</span>对照</span></button></span>
-    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span></button>
+    <button class="dsh-balance-mini-chip ready lv-green" type="button"><span class="dsh-balance-mini-dot"></span><span class="dsh-balance-mini-cap">总余额</span><span>¥566.47</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-sess"></span><span class="dsh-balance-mini-cap">会话累计</span><span>¥13.265</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-minidot dot-turn"></span><span class="dsh-balance-mini-cap">本轮消耗</span><span>¥0.095</span><span class="dsh-balance-mini-gap"></span><span class="dsh-balance-mini-tier idle">空闲</span></button>
   </div>
 </div>
 
