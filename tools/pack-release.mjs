@@ -163,6 +163,34 @@ if (existsSync(tgzPath)) {
       notPacked.length ? "缺: " + notPacked.join(", ") : "");
   }
 
+  // ⚠️ **tgz 里的每个文件都必须来自版本控制。**
+  //
+  // `files` 里只要出现目录通配（`"docs/"`、`"lib/"`），`npm pack` 就会把该目录下
+  // **工作区里的一切**都收进去 —— 包括没提交的笔记、日志、临时脚本。
+  // 这与之前 zip 扫目录是同一个病；删掉 zip 并没有解决 tgz 这一半。
+  // 断言"每个条目都是 git 跟踪的文件"，以后谁再放宽 files 都会立刻变红。
+  {
+    let tracked = null;
+    try {
+      tracked = new Set(
+        execFileSync("git", ["-C", ROOT, "ls-files"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+          .split("\n").map((s) => s.trim()).filter(Boolean),
+      );
+    } catch (error) {
+      ck(false, "能用 git 枚举受控文件（tgz 每个条目都要核对来源）", String(error && error.message));
+    }
+    if (tracked) {
+      const listed = execFileSync("tar", ["-tzf", tgzPath], { encoding: "utf8" })
+        .split("\n").map((s) => s.trim()).filter(Boolean)
+        .map((e) => e.replace(/^package\//, ""))
+        .filter((e) => e !== "" && !e.endsWith("/"));
+      const untracked = listed.filter((e) => !tracked.has(e));
+      ck(untracked.length === 0,
+        "tgz 内每个文件都来自版本控制（files 不得把工作区未提交文件打进去）",
+        untracked.length ? "越界: " + untracked.slice(0, 5).join(", ") : listed.length + " 个条目");
+    }
+  }
+
   // ⚠️ 这条就是问题 6：包内 README 曾落后一个版本，照它操作会找不到文件
   //
   // ⚠️ 正则必须用**当前包名**。曾写死 `dsh-balance-mini-`，改名后它永远匹配 0 次，
