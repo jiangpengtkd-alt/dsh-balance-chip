@@ -2,6 +2,33 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.13.8
+
+**只发 tgz，不再生成 zip。**
+
+实测过：
+
+```
+dsh plugin add dsh-balance-chip-0.13.7.zip
+→ ERR_PNPM_NOT_PACKAGE_DIRECTORY: ... as it is not a directory
+```
+
+zip 里还套了一层 `dsh-balance-chip-0.13.7/`，用户得先解压、进目录、再翻出里面的 tgz
+才能装。而 Release 页面上两个文件并排摆着、**没有任何提示** —— 第一次用的人大概率点错。
+（解压后用那个目录 `add` 是可行的，但那是第三条路径，更难猜。）
+
+所以把 zip 整条链路删掉：
+
+- `tools/pack-release.mjs`：删掉 `writeZip` / `crc32` / `ZIP_INCLUDE` / `startHereDoc` /
+  zip 构建段，以及 22 条 zip 断言 —— **490 行 → 228 行**
+- `--check` 从 36 条降到 14 条：删掉的全是"zip 自己"的断言，tgz 的校验一条没动
+  （存在性、版本一致、逐字节一致、`files` 清单完整性、文档口径规则都还在）
+- 四份中文文档（`从这里开始.md` / `快速上手.md` / `安装说明.md` / `更新记录.md`）随 zip 一起消失。
+  它们在 GitHub 上读比在压缩包里舒服得多
+- README / QUICKSTART 相应改写：QUICKSTART 第八节从"zip 里有什么"改成"tgz 里有什么"
+
+一句话：**下载页只有一个文件，就不会有人点错。**
+
 ## 0.13.7
 
 胶囊截图换成**更直观的整排视图**（`docs/screenshot-chip.png`，2060×266）。

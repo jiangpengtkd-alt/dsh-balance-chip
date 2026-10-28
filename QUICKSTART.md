@@ -219,21 +219,21 @@ dsh plugin --profile desktop remove dsh-balance-chip
 
 ## 八、本包含什么
 
-解压后是一个 `dsh-balance-chip-<版本>/` 目录（结构与仓库根一致，**没有额外的 `plugin/` 层**）：
+安装包就是一个 `.tgz`（npm 标准 tar），解压后是 `package/` 目录，内容与仓库根一致：
 
 | 路径 | 说明 |
 |---|---|
-| `从这里开始.md` | **先看这个**：三步上手 + 三份文档各管什么 |
-| `dsh-balance-chip-<版本>.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
 | `lib/` | 插件源码：`client.js`（浏览器端）、`index.js`（host 端）、`holidays.js` |
 | `README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
 | `INSTALL.md` | 安装与平台支持（含排查清单） |
-| `安装说明.md` | 同 `INSTALL.md`（打包时复制，方便直接看） |
-| `更新记录.md` | 完整版本历史，同 `CHANGELOG.md` |
+| `QUICKSTART.md` | 本文件：每个数字是什么意思 |
+| `CHANGELOG.md` | 完整版本历史 |
 | `docs/preview.html` | 样式预览（由 `tools/gen-preview.mjs` 从源码生成） |
+| `docs/screenshot-*.png` | 两张实机截图 |
 | `tools/` | 五套测试 + 打包脚本 `pack-release.mjs` |
 
-> **zip 与 tgz 的分工**：`dsh plugin add` 只需要 tgz —— 它是最小安装包，只含运行所需文件。
-> zip 是给人看的下载包，额外包含四份中文文档、`docs/audits/` 和里面的那个 tgz。
-> 两者内容同源，`tools/pack-release.mjs --check` 会逐字节校验，不会各走各的。
+> **只发 tgz 一种产物。** 曾经还有一个含全部文档的 zip，但 `dsh plugin add xxx.zip`
+> 会直接报 `ERR_PNPM_NOT_PACKAGE_DIRECTORY`（它不是目录），而下载页上并排摆两个文件
+> 必然有人点错 —— 所以整个 zip 链路已经删掉。想看文档直接在 GitHub 上读，比在压缩包里
+> 舒服得多。
 

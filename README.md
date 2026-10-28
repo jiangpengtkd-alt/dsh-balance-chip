@@ -165,7 +165,7 @@ lib/
 tools/             五套测试 + 打包脚本 pack-release.mjs + 预览生成器
 docs/preview.html  样式预览（由 gen-preview.mjs 生成，需与源码同步）
 docs/audits/       两轮独立审计的完整记录（问题、证据、根因、修法）
-releases/          发布包（.tgz 安装包 + .zip 完整包，每个版本一个 tag）
+releases/          发布包（.tgz 安装包，每个版本一个 tag）
 QUICKSTART.md      中文上手（含每个数字的定义、联网边界、年度维护）
 CHANGELOG.md       完整版本历史（含每个 bug 的根因与修法）
 INSTALL.md         安装与排查

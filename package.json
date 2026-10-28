@@ -1,6 +1,6 @@
 {
   "name": "dsh-balance-chip",
-  "version": "0.13.7",
+  "version": "0.13.8",
   "description": "DSH web GUI plugin: shows DeepSeek account balance and per-session/turn cost next to the context meter, priced with DeepSeek peak/off-peak rules (weekday hours, weekends and PRC statutory holidays). Host-side reads only; the balance is read from the local DSH account service (falls back to api.deepseek.com when that is unavailable, sending only the locally configured API key).",
   "type": "module",
   "license": "MIT",
