@@ -1,4 +1,4 @@
-# dsh-balance-mini
+# dsh-balance-chip
 
 [![tests](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml/badge.svg)](https://github.com/jiangpengtkd-alt/dsh-balance-mini/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -46,7 +46,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-<版本>.tgz
+dsh plugin --profile desktop add dsh-balance-chip-<版本>.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -118,10 +118,10 @@ INSTALL.md         安装与排查
 
 ## 安装位置
 
-插件目录可以放在任意位置，下例用 `~/.dsh/plugins/dsh-balance-mini`：
+插件目录可以放在任意位置，下例用 `~/.dsh/plugins/dsh-balance-chip`：
 
 ```
-~/.dsh/plugins/dsh-balance-mini     ← 插件源码（位置可自选）
+~/.dsh/plugins/dsh-balance-chip     ← 插件源码（位置可自选）
         ├─ lib/index.js        host 半身
         ├─ lib/client.js       client 半身（浏览器）
         ├─ lib/holidays.js     法定节假日数据（唯一的年度维护点）
@@ -134,9 +134,9 @@ profile 侧用 link 依赖指向它，不需要把代码拷进 profile 目录：
 
 ```
 ~/.dsh/profiles/<profile>/
-    ├─ package.json       dependencies: dsh-balance-mini → link:<插件目录>
+    ├─ package.json       dependencies: dsh-balance-chip → link:<插件目录>
     ├─ pnpm-lock.yaml     同上（specifier / version）
-    └─ node_modules/dsh-balance-mini  →  软链到插件目录
+    └─ node_modules/dsh-balance-chip  →  软链到插件目录
 ```
 
 **装完（改完代码后同理）都要重启 DSH 才生效**：host 半身必须重启，client 半身随 host 一起重新生成。
@@ -184,10 +184,10 @@ profile 侧用 link 依赖指向它，不需要把代码拷进 profile 目录：
 
 ```bash
 # macOS / Linux
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-chip-<版本>.tgz
 
 # Windows (PowerShell)
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-<版本>.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-chip-<版本>.tgz"
 ```
 
 把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。
@@ -289,7 +289,7 @@ const peak = weekday && inPeak && !holiday;
 
 ```yaml
 - id: balance-mini
-  name: dsh-balance-mini
+  name: dsh-balance-chip
   config:
     refreshMs: 30000    # 余额刷新间隔（毫秒，默认 60000）
     timeoutMs: 15000    # 余额查询超时（毫秒，默认 15000）
@@ -342,12 +342,12 @@ const peak = weekday && inPeak && !holiday;
 ## 卸载
 
 ```powershell
-dsh plugin --profile desktop remove dsh-balance-mini
+dsh plugin --profile desktop remove dsh-balance-chip
 ```
 
-然后删掉本目录即可。也可以手动把 `dsh-balance-mini` 从 profile 的
+然后删掉本目录即可。也可以手动把 `dsh-balance-chip` 从 profile 的
 `package.json` 的 `dsh.profile.bundles` 数组里移除、并删除
-`node_modules\dsh-balance-mini` 链接。
+`node_modules\dsh-balance-chip` 链接。
 
 ## 刷新节奏
 

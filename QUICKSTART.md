@@ -1,4 +1,4 @@
-# dsh-balance-mini —— 快速上手
+# dsh-balance-chip —— 快速上手
 
 DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **余额** 与 **消费**，点击可展开明细。
 
@@ -49,18 +49,18 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **�
 **Windows（PowerShell）**
 
 ```powershell
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-<版本>.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-chip-<版本>.tgz"
 ```
 
 **macOS / Linux（bash / zsh）**
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-chip-<版本>.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名 —— 真实名字是 `~/.dsh/profiles/` 下的目录名。
 
-也可以直接用目录安装（免打包）：`dsh plugin --profile desktop add <解压出来的 dsh-balance-mini-<版本> 目录>`。
+也可以直接用目录安装（免打包）：`dsh plugin --profile desktop add <解压出来的 dsh-balance-chip-<版本> 目录>`。
 
 ---
 
@@ -194,7 +194,7 @@ node tools/gen-preview.mjs      # 28 项  预览页自检
 ## 七、卸载
 
 ```bash
-dsh plugin --profile desktop remove dsh-balance-mini
+dsh plugin --profile desktop remove dsh-balance-chip
 ```
 
 再重启 DSH。
@@ -203,12 +203,12 @@ dsh plugin --profile desktop remove dsh-balance-mini
 
 ## 八、本包含什么
 
-解压后是一个 `dsh-balance-mini-<版本>/` 目录（结构与仓库根一致，**没有额外的 `plugin/` 层**）：
+解压后是一个 `dsh-balance-chip-<版本>/` 目录（结构与仓库根一致，**没有额外的 `plugin/` 层**）：
 
 | 路径 | 说明 |
 |---|---|
 | `从这里开始.md` | **先看这个**：三步上手 + 三份文档各管什么 |
-| `dsh-balance-mini-<版本>.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
+| `dsh-balance-chip-<版本>.tgz` | **安装包**（也可以直接 `add` 解压出来的这个目录） |
 | `lib/` | 插件源码：`client.js`（浏览器端）、`index.js`（host 端）、`holidays.js` |
 | `README.md` | 技术文档：数据来源与口径、计价规则、实现要点、已知限制 |
 | `INSTALL.md` | 安装与平台支持（含排查清单） |

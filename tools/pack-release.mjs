@@ -32,8 +32,9 @@ const CHECK_ONLY = process.argv.includes("--check");
 
 const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 const VERSION = pkg.version;
-const TGZ_NAME = `dsh-balance-mini-${VERSION}.tgz`;
-const ZIP_NAME = `dsh-balance-mini-${VERSION}.zip`;
+// 产物名一律从 package.json 的 name 派生 —— 曾经写死过一次，改包名时漏改这里会很隐蔽。
+const TGZ_NAME = `${pkg.name}-${VERSION}.tgz`;
+const ZIP_NAME = `${pkg.name}-${VERSION}.zip`;
 const RELEASES = join(ROOT, "releases");
 
 let pass = 0;
@@ -142,11 +143,11 @@ function writeZip(entries, outPath) {
 function startHereDoc(version) {
   return `# 从这里开始
 
-dsh-balance-mini ${version} —— DSH Web GUI 插件：在输入框下方显示**余额**与**消费**，点开看明细。
+dsh-balance-chip ${version} —— DSH Web GUI 插件：在输入框下方显示**余额**与**消费**，点开看明细。
 
 ## 三步
 
-1. **装**：\`dsh plugin --profile desktop add dsh-balance-mini-${version}.tgz\`，装完**重启 DSH**
+1. **装**：\`dsh plugin --profile desktop add ${pkg.name}-${version}.tgz\`，装完**重启 DSH**
 2. **看**：输入框下方出现「◉ 总余额 ¥…」，点它展开明细
 3. **出问题**：看《安装说明.md》里「装完没反应」那一节
 
@@ -191,7 +192,10 @@ if (!CHECK_ONLY) {
   // 旧产物不会让它失败，只会静静留在仓库里误导人（这个坑踩过两次）。
   if (existsSync(RELEASES)) {
     for (const f of readdirSync(RELEASES)) {
-      if (f.startsWith("dsh-balance-mini-") && f !== TGZ_NAME && f !== ZIP_NAME) {
+      // 同时认旧包名前缀：改名后若只按新名前缀清，旧 tgz/zip 会一直躺在 releases/ 里，
+      // 而产物断言只按**当前版本**比对，根本发现不了它们 —— 这类"改名残留"最容易漏。
+      const staleNamePrefixes = [pkg.name + "-", "dsh-balance-mini-"];
+      if (staleNamePrefixes.some((p) => f.startsWith(p)) && f !== TGZ_NAME && f !== ZIP_NAME) {
         rmSyncCompat(join(RELEASES, f));
         console.log(`    （清掉旧产物 ${f}）`);
       }

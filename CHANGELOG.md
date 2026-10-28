@@ -2,6 +2,47 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.12.0
+
+**改包名**：`dsh-balance-mini` → `dsh-balance-chip`。
+
+### 为什么改
+
+GitHub 上叫 `dsh-balance-mini` 的仓库有 3 个，`dsh-balance` 开头的有 **398** 个；
+npm 上 `dsh-usage-balance`、`dsh-peak-balance` 这类近义名也已被占。而 `mini` 这个
+后缀本身不传递任何信息（一堆插件都叫 mini）。
+
+这个插件真正的东西是**胶囊**那一条：三段实时消费（本轮/本日/累计）+ 峰谷计价含
+法定节假日。`chip` 比 `mini` 更能说明它是什么，也和代码里既有的内部术语一致
+（`CHIP_CLASS`、`chip.css`）。
+
+### 升级要做什么（0.11.x → 0.12.0）
+
+包名变了，等于**换成了一个新插件**，profile 里的旧依赖不会自动迁移：
+
+```bash
+dsh plugin --profile desktop remove dsh-balance-mini
+dsh plugin --profile desktop add <路径>/dsh-balance-chip-0.12.0.tgz
+# 然后重启 DSH
+```
+
+### 刻意**没有**跟着改的三个内部标识
+
+- **路由 `/balance-mini`** —— host 与浏览器两半同时引用，改它没有收益只有风险
+- **Cordis 行 id `balance-mini`** —— 改了会让已有 profile 里按 id 的覆盖配置失效
+- **CSS 类名 `dsh-balance-mini-*`** —— 纯内部 DOM 标识，用户看不到；跟着改要牵动
+  `render-test.mjs` 里的渲染断言，风险大于收益
+
+对外身份（`package.json` 的 `name`、`cordis.patch.yml` 的 `name:`、浏览器模块的 `id`）
+已统一为 `dsh-balance-chip`。
+
+### 顺带修掉的隐患
+
+- `pack-release.mjs` 的产物名改为**从 `package.json` 派生**（原来写死 `dsh-balance-mini-`，
+  改包名时必漏），并且清理旧产物时会同时认**旧包名前缀** —— 否则改名后旧 tgz/zip 会
+  静静躺在 `releases/` 里，而产物断言只按当前版本比对，发现不了
+- `keywords` 补 `token-usage` / `peak-pricing` / `off-peak`
+
 ## 0.11.6
 
 公开前的收尾：一处"格式版本写死"的隐患、包元数据、以及一个**被实测否决**的兼容声明。

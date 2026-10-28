@@ -67,13 +67,13 @@
 **Windows（PowerShell）**
 
 ```powershell
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-<版本>.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-chip-<版本>.tgz"
 ```
 
 **macOS / Linux（bash / zsh）**
 
 ```bash
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-chip-<版本>.tgz
 ```
 
 > 这条命令已在 macOS（darwin-arm64）上实测通过。
@@ -85,12 +85,12 @@ dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
 
 ### ⚠️ 从仓库的 `releases/` 直接安装会踩的坑
 
-如果你是按 `dsh plugin add ./releases/dsh-balance-mini-<版本>.tgz` 装的，
+如果你是按 `dsh plugin add ./releases/dsh-balance-chip-<版本>.tgz` 装的，
 profile 里记的是**那个路径**。而 `releases/` 里**只保留当前版本**（打包脚本会清掉旧产物），
 所以下次 `git pull` 把旧 tgz 删掉之后，pnpm 在解析现有依赖时会直接 ENOENT：
 
 ```
-[ENOENT] no such file or directory, open '…/releases/dsh-balance-mini-0.10.5.tgz'
+[ENOENT] no such file or directory, open '…/releases/dsh-balance-chip-0.10.5.tgz'
 dsh: plugin command failed    [exit=254]
 ```
 
@@ -99,14 +99,14 @@ dsh: plugin command failed    [exit=254]
 **正确做法**：装之前先把 tgz 拷到**不随 `git pull` 变动**的位置：
 
 ```bash
-cp releases/dsh-balance-mini-<版本>.tgz ~/.dsh/plugins/
-dsh plugin --profile desktop add ~/.dsh/plugins/dsh-balance-mini-<版本>.tgz
+cp releases/dsh-balance-chip-<版本>.tgz ~/.dsh/plugins/
+dsh plugin --profile desktop add ~/.dsh/plugins/dsh-balance-chip-<版本>.tgz
 ```
 
 **已经踩了的话，两步恢复**：
 
 ```bash
-dsh plugin --profile desktop remove dsh-balance-mini   # 摘掉悬空依赖
+dsh plugin --profile desktop remove dsh-balance-chip   # 摘掉悬空依赖
 dsh plugin --profile desktop add <新 tgz 的稳定路径>   # 再装
 ```
 
@@ -121,20 +121,20 @@ dsh plugin --profile desktop add <新 tgz 的稳定路径>   # 再装
 **Windows**
 
 ```powershell
-# 把整个插件目录拷到目标电脑，例如 D:\plugins\dsh-balance-mini
-dsh plugin --profile desktop add "D:\plugins\dsh-balance-mini"
+# 把整个插件目录拷到目标电脑，例如 D:\plugins\dsh-balance-chip
+dsh plugin --profile desktop add "D:\plugins\dsh-balance-chip"
 ```
 
 **macOS / Linux**
 
 ```bash
-# 例如 ~/dsh-plugins/dsh-balance-mini
-dsh plugin --profile desktop add ~/dsh-plugins/dsh-balance-mini
+# 例如 ~/dsh-plugins/dsh-balance-chip
+dsh plugin --profile desktop add ~/dsh-plugins/dsh-balance-chip
 ```
 
 ### 方式 3：发布到 npm —— 之后一行命令装，且可更新
 
-包名 `dsh-balance-mini` 目前在 npm 上**未被占用**。若你有 npm 账号：
+包名 `dsh-balance-chip` 目前在 npm 上**未被占用**。若你有 npm 账号：
 
 ```bash
 # 在插件目录里执行
@@ -145,7 +145,7 @@ npm publish          # package.json 里 publishConfig.access 已是 public
 之后任何一台电脑上（需联网）：
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini
+dsh plugin --profile desktop add dsh-balance-chip
 ```
 
 ---
@@ -228,7 +228,7 @@ ls ~/.dsh/profiles/<profile>/cordis.patch.yml.bak-*
 ## 六、卸载
 
 ```bash
-dsh plugin --profile desktop remove dsh-balance-mini
+dsh plugin --profile desktop remove dsh-balance-chip
 ```
 
 然后重启 DSH。若是方式 2 装的，再删掉你拷过去那个目录。

@@ -112,7 +112,7 @@ const html = `<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>dsh-balance-mini — 样式预览</title>
+<title>dsh-balance-chip — 样式预览</title>
 <style>
   /* ══════════════════════════════════════════════════════════════════
      本文件的 CSS 由 tools/gen-preview.mjs 从 lib/client.js 的 CSS 数组
@@ -185,7 +185,7 @@ ${chipCss.split("}").filter((r) => r.trim()).map((r) => "  " + r.trim() + "}").j
 </head>
 <body>
 
-<h1>dsh-balance-mini — 样式预览</h1>
+<h1>dsh-balance-chip — 样式预览</h1>
 <p class="sub">
   本页 CSS 由 <code>tools/gen-preview.mjs</code> 从 <code>lib/client.js</code> 求值生成，与实机同一份定义。<br>
   原厂 <code>StatsPills</code> 的真实 CSS（<code>.iq1doa_*</code>）也内置其中，用于并排对照。
