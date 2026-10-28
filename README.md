@@ -84,9 +84,18 @@ node tools/gen-preview.mjs      # 生成 docs/preview.html
 **只从本仓库的 [Releases](https://github.com/jiangpengtkd-alt/dsh-balance-chip/releases) 下载安装包。**
 
 本插件会读取本机 `~/.dsh/.credentials.yaml`，用于账号服务不可用时直连
-`api.deepseek.com/user/balance` 的兜底查询。凭据只会发往 DeepSeek 官方接口，
-不会写入日志、不会返回给浏览器、不会发往任何第三方 —— **但这个保证只适用于本仓库
-发布的原版**。被改过的副本（fork、二次打包、第三方网盘）不受此保证。
+`api.deepseek.com/user/balance` 的兜底查询。**默认配置下**凭据只发往 `api.deepseek.com`：
+不写入日志、不返回给浏览器、不发往任何第三方。
+
+⚠️ **两个例外，必须说清**：
+
+1. **`baseURL` 是可配置的**（见「配置」一节）。若你把它改成别的地址，兜底路径就会把
+   API Key 发往**那个地址** —— 上面那条保证只对默认值成立。
+2. **被改过的副本**（fork、二次打包、第三方网盘）不受任何保证 —— 这也是要核对
+   SHA256 的原因。
+
+另外，HTTP 接口只校验**回环地址与 Host**，不做 DSH 登录校验：**同一台机器上的其他进程
+也能读取余额**。它只能读 —— 插件对磁盘、对配置都没有写操作。
 
 每个 Release 附带 `SHA256SUMS.txt`，下载后可自行核对：
 
@@ -509,3 +518,12 @@ msedge --headless=new --force-device-scale-factor=2 --window-size=780,900 \
 > 原厂一律写 `var(--token)`。加兜底（如 `var(--dsw-alias-separator-primary, rgba(128,128,128,.5))`）
 > 可能让该属性解析出与原厂不同的值 —— 分隔点变暗后会显得更小。
 > 详见下面「实现要点」第 6 条。
+
+## 许可与致谢
+
+本插件以 **MIT** 发布（见 [LICENSE](./LICENSE)）。
+
+胶囊与浮层的视觉（字号、字重、行高、内边距、分割线、状态色）参考并对齐
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的官方组件。
+该项目同为 **MIT** 许可，版权归 DeepSeek 及其贡献者所有 —— 此处保留该声明，以符合
+MIT 对再分发的要求。若有不周之处，欢迎指出。

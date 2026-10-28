@@ -45,15 +45,27 @@ const ck = (ok, label, extra) => {
   console.log(`  ${ok ? "\u2713" : "\u2717"}  ${label}${extra ? "   " + extra : ""}`);
 };
 
-/** 递归列出文件，返回 POSIX 相对路径（**始终正斜杠**）。 */
-function listFiles(dir, base = dir) {
-  const out = [];
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) out.push(...listFiles(p, base));
-    else out.push(relative(base, p).split("\\").join("/"));
+/**
+ * 列出**受版本控制**的文件，返回 POSIX 相对路径（**始终正斜杠**）。
+ *
+ * ⚠️ 必须用 `git ls-files`，不能递归扫目录。扫目录会连 `.gitignore` 忽略的东西一起打包 ——
+ * `.env`、日志、`_scratch.mjs` 这类临时文件都会静静进 zip。这种"打包夹带本地文件"的
+ * 泄露不能靠人每次记得清目录来防：一次忘记就永久留在发布物里。
+ * 拿不到 git 时**直接失败**，不做"退化成扫目录"的兜底 —— 那正是要防的行为。
+ */
+function listTrackedFiles() {
+  let out;
+  try {
+    out = execFileSync("git", ["-C", ROOT, "ls-files", "-z"], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch (error) {
+    console.error("  ✗ 无法用 git 枚举受版本控制的文件：" + String(error && error.message ? error.message : error));
+    console.error("    zip 成员清单必须来自 git ls-files —— 扫目录会夹带被 .gitignore 掉的本地文件。");
+    process.exit(1);
   }
-  return out.sort();
+  return out.split("\0").filter((p) => p !== "").sort();
 }
 
 // ── 最小 ZIP 写入器（store + deflate，条目名 POSIX 正斜杠）──
@@ -171,7 +183,7 @@ dsh-balance-chip ${version} —— DSH Web GUI 插件：在输入框下方显示
 }
 
 // ── 组装 zip 内容：plugin/ + tgz + 三份中文文档 ──
-const ZIP_INCLUDE = listFiles(ROOT).filter(
+const ZIP_INCLUDE = listTrackedFiles().filter(
   (f) =>
     !f.startsWith("releases/") &&
     !f.startsWith(".git/") &&
