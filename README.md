@@ -47,7 +47,7 @@ DSH（DeepSeek Harness）Web GUI 插件：在输入框下方那一排显示 **De
 ## 快速开始
 
 ```bash
-dsh plugin --profile desktop add dsh-balance-mini-0.11.4.tgz
+dsh plugin --profile desktop add dsh-balance-mini-<版本>.tgz
 ```
 
 装完**重启 DSH**。`desktop` 是 profile 名，换成你自己的。
@@ -119,8 +119,10 @@ INSTALL.md         安装与排查
 
 ## 安装位置
 
+插件目录可以放在任意位置，下例用 `~/.dsh/plugins/dsh-balance-mini`：
+
 ```
-C:\Users\<user>\.dsh\plugins\dsh-balance-mini     ← 本目录（插件源码）
+~/.dsh/plugins/dsh-balance-mini     ← 插件源码（位置可自选）
         ├─ lib/index.js        host 半身
         ├─ lib/client.js       client 半身（浏览器）
         ├─ lib/holidays.js     法定节假日数据（唯一的年度维护点）
@@ -129,17 +131,16 @@ C:\Users\<user>\.dsh\plugins\dsh-balance-mini     ← 本目录（插件源码�
         └─ tools/gen-preview.mjs  预览生成器（从 client.js 求值，见「预览」一节）
 ```
 
-profile 侧通过 junction 引用，不需要把代码放进 profile 目录：
+profile 侧用 link 依赖指向它，不需要把代码拷进 profile 目录：
 
 ```
-C:\Users\<user>\.dsh\profiles\desktop\
-    ├─ package.json       dependencies: dsh-balance-mini → link:C:/Users/<user>/.dsh/plugins/dsh-balance-mini
+~/.dsh/profiles/<profile>/
+    ├─ package.json       dependencies: dsh-balance-mini → link:<插件目录>
     ├─ pnpm-lock.yaml     同上（specifier / version）
-    └─ node_modules\dsh-balance-mini  →  Junction 指向本目录
+    └─ node_modules/dsh-balance-mini  →  软链到插件目录
 ```
 
-**改代码后要重启 DSH 才生效**（host 半身必须重启；client 半身随 host 一起重新生成）。
-如果想改完立刻看到效果，开发时可以让 `pnpm run dev:web` 同时运行以启用 client bundle 热重建。
+**装完（改完代码后同理）都要重启 DSH 才生效**：host 半身必须重启，client 半身随 host 一起重新生成。
 
 ## 平台支持
 
@@ -184,10 +185,10 @@ C:\Users\<user>\.dsh\profiles\desktop\
 
 ```bash
 # macOS / Linux
-dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-0.11.4.tgz
+dsh plugin --profile desktop add ~/Downloads/dsh-balance-mini-<版本>.tgz
 
 # Windows (PowerShell)
-dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-0.11.4.tgz"
+dsh plugin --profile desktop add "C:\路径\dsh-balance-mini-<版本>.tgz"
 ```
 
 把版本号换成你实际下载到的那个文件名 —— 包名里的版本会随发布变化。

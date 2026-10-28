@@ -169,11 +169,11 @@ console.log("  ── 场景 1：新会话（openTurnStartSeq = null）──");
 {
   const v = await fetchCost({ sessionId: SESSION_ID });
   ck(v?.cost !== undefined, "cost 存在（曾经这里整块消失）");
-  ck(near(v?.cost?.total, price(totals)), "会话累计金额正确", `¥${v?.cost?.total?.toFixed(4)}`);
+  ck(near(v?.cost?.total, price(totals, v?.cost?.peak)), "会话累计金额正确", `¥${v?.cost?.total?.toFixed(4)}`);
   // 新会话、无进行中的轮次、也还没有过任何一轮结束 → 本轮无值可显示，
   // 客户端会显示占位 "—"（三段始终占位，不整段省略）。
   ck(v?.cost?.turn === undefined, "本轮为 undefined（无实时值也无历史轮次 → 界面显示占位）");
-  ck(near(v?.cost?.avgPerTurn, price(totals) / sessionStats.turns), "每轮平均消耗 = 会话累计 ÷ 轮数");
+  ck(near(v?.cost?.avgPerTurn, price(totals, v?.cost?.peak) / sessionStats.turns), "每轮平均消耗 = 会话累计 ÷ 轮数");
   ck(v?.cost?.cacheShare > 0.99, "缓存占比 > 99%", `${(v?.cost?.cacheShare * 100).toFixed(1)}%`);
   ck(v?.topUp === Number(BALANCE.balance), "充值余额读取正常", `¥${v?.topUp}`);
   ck(v?.total === Number(BALANCE.balance), "无赠金时总余额 = 充值余额", `¥${v?.total}`);
@@ -212,7 +212,7 @@ console.log("\n  ── 场景 2：本轮开始，累计增长 ──");
   };
   const v = await fetchCost({ sessionId: SESSION_ID });
   ck(v?.cost?.turn !== undefined, "本轮有值");
-  ck(near(v?.cost?.turn, price(grew)), "本轮金额 = 本轮增量计价", `¥${v?.cost?.turn?.toFixed(6)}`);
+  ck(near(v?.cost?.turn, price(grew, v?.cost?.peak)), "本轮金额 = 本轮增量计价", `¥${v?.cost?.turn?.toFixed(6)}`);
   ck(typeof v?.cost?.turn === "number" && v.cost.turn > 0, "本轮是正的实时值（有进行中的轮次）");
   void before;
 }
@@ -230,7 +230,7 @@ console.log("\n  ── 场景 3：同轮内继续增长（基准应保持）─
   };
   const v = await fetchCost({ sessionId: SESSION_ID });
   // 本轮 = 场景 2 的增量 + 本次增量
-  const expectTurn = price(grew) + price({ uncachedInputTokens: 500, outputTokens: 1200, cacheReadTokens: 800000, cacheWriteTokens: 0 });
+  const expectTurn = price(grew, v?.cost?.peak) + price({ uncachedInputTokens: 500, outputTokens: 1200, cacheReadTokens: 800000, cacheWriteTokens: 0 }, v?.cost?.peak);
   ck(near(v?.cost?.turn, expectTurn), "本轮为两段增量之和（基准未重置）", `¥${v?.cost?.turn?.toFixed(6)}`);
   void baseBefore;
 }
@@ -260,7 +260,7 @@ console.log("\n  ── 场景 4：进入新一轮（openTurnStartSeq 变化）�
     cacheReadTokens: totals.cacheReadTokens + grew.cacheReadTokens,
   };
   const v1 = await fetchCost({ sessionId: SESSION_ID });
-  ck(near(v1?.cost?.turn, baselineTurn + price(grew)), "本轮累加 = 起始值 + 本次增量", `¥${v1?.cost?.turn?.toFixed(6)}`);
+  ck(near(v1?.cost?.turn, baselineTurn + price(grew, v1?.cost?.peak)), "本轮累加 = 起始值 + 本次增量", `¥${v1?.cost?.turn?.toFixed(6)}`);
   ck(v1?.cost?.turn > 0, "有消耗后本轮为正数（实时值，非回退值）");
 }
 
@@ -466,8 +466,49 @@ console.log("\n  ── 场景 11：本日消耗的取数路径 ──");
   // 曾经的 bug：用 subtractBuckets(totals, undefined) "归一化" → 恒返回 undefined
   ck(!/subtractBuckets\(totals, undefined\)/.test(src), "没有用 subtractBuckets 归一化累加结果（会恒返回 undefined）");
   ck(!/dayBaseBySession/.test(src), "已移除废弃的会话级基准");
+  // 回归：本日消耗必须按**事件时间**逐条计价。
+  // 曾经的实现是「汇总全天 token → × priceRateNow()」：数字会在 09:00/12:00/
+  // 14:00/18:00 四个边界上，在没有任何新用量的情况下翻倍或腰斩。
+  ck(/rateAt\(event\.time\)/.test(src), "本日消耗按事件时间逐条计价");
+  ck(!/priceBuckets\(totals, priceRateNow\(\)\)/.test(src), "没有回退成「全天 token × 当前单价」");
 }
 
+// ── 场景 12：时段边界（确定性 —— 固定时间戳，不依赖运行时刻与机器时区）──
+//
+// 为什么必须有这一条：此前整套测试的期望值写死"空闲价"，于是在工作日高峰时段
+// （北京 09:00-12:00 / 14:00-18:00）跑，5 条金额断言会整整差一倍。同一个提交按
+// "什么时候跑"给出不同结果，而 CI 恰恰会在中国白天推送时变红。
+// 时段判断是纯函数 tierAt(ms)，就该像代码一样用固定输入测边界。
+console.log("\n  ── 场景 12：时段边界（固定时间戳）──");
+{
+  // 北京墙钟 → epoch ms（北京 = UTC+8，故减去 8 小时）
+  const bj = (y, mo, d, h, mi = 0) => Date.UTC(y, mo - 1, d, h - 8, mi);
+  const cases = [
+    ["周三 08:59", bj(2026, 10, 28, 8, 59), false],
+    ["周三 09:00", bj(2026, 10, 28, 9, 0), true],
+    ["周三 11:59", bj(2026, 10, 28, 11, 59), true],
+    ["周三 12:00", bj(2026, 10, 28, 12, 0), false],
+    ["周三 13:59", bj(2026, 10, 28, 13, 59), false],
+    ["周三 14:00", bj(2026, 10, 28, 14, 0), true],
+    ["周三 17:59", bj(2026, 10, 28, 17, 59), true],
+    ["周三 18:00", bj(2026, 10, 28, 18, 0), false],
+    ["周六 10:00", bj(2026, 10, 31, 10, 0), false],
+    ["周日 15:00", bj(2026, 11, 1, 15, 0), false],
+    ["国庆 10:00", bj(2026, 10, 1, 10, 0), false],
+  ];
+  for (const [label, ms, wantPeak] of cases) {
+    const tier = mod.tierAt(ms);
+    const rate = mod.rateAt(ms);
+    ck(tier.peak === wantPeak, `${label} → ${wantPeak ? "高峰" : "空闲"}`, `peak=${tier.peak}`);
+    ck(rate.miss === (wantPeak ? 2 : 1) && rate.hit === (wantPeak ? 0.04 : 0.02) && rate.out === (wantPeak ? 8 : 4),
+      `${label} · 单价档位正确`, `miss=${rate.miss} hit=${rate.hit} out=${rate.out}`);
+  }
+  // 同一批 token 在两档下的金额必须正好差 2 倍（逐事件计价的前提）
+  const b = { uncachedInputTokens: 1000, outputTokens: 1000, cacheReadTokens: 1e6, cacheWriteTokens: 0 };
+  const sum = (r) => (b.uncachedInputTokens * r.miss + b.cacheReadTokens * r.hit + b.outputTokens * r.out) / 1e6;
+  ck(near(sum(mod.rateAt(bj(2026, 10, 28, 10, 0))), sum(mod.rateAt(bj(2026, 10, 28, 12, 30))) * 2),
+    "高峰价 = 空闲价 × 2");
+}
 
 console.log("  " + "-".repeat(52));
 console.log(`  ${pass}/${total} 项通过${pass === total ? "" : "   ← 有失败项"}`);
