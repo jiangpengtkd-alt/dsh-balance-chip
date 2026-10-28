@@ -331,8 +331,13 @@ if (existsSync(tgzPath)) {
   }
 
   // ⚠️ 这条就是问题 6：包内 README 曾落后一个版本，照它操作会找不到文件
+  //
+  // ⚠️ 正则必须用**当前包名**。曾写死 `dsh-balance-mini-`，改名后它永远匹配 0 次，
+  // 于是 `refs.length === 0` 恒真 —— 守卫还在，却已经什么都不拦了。
+  // 判据"存在"不等于"有效"，这正是这个项目反复踩过的那一类。
   const pkgReadme = readFileSync(join(P, "README.md"), "utf8");
-  const refs = [...new Set([...pkgReadme.matchAll(/dsh-balance-mini-(\d+\.\d+\.\d+)\.tgz/g)].map((m) => m[1]))];
+  const tgzRefPattern = new RegExp(`${pkg.name}-(\\d+\\.\\d+\\.\\d+)\\.tgz`, "g");
+  const refs = [...new Set([...pkgReadme.matchAll(tgzRefPattern)].map((m) => m[1]))];
   ck(refs.length === 0 || refs.every((v) => v === VERSION),
     "tgz 内 README 引用的 tgz 版本号正确", refs.join(",") || "（未写死版本号）");
 
