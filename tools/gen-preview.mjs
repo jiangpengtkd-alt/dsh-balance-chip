@@ -93,10 +93,12 @@ const chip = (level, inner, attrs = "") =>
   `<button class="${CHIP_CLASS} ready lv-${level}" type="button"${attrs}>` +
   `<span class="dsh-balance-mini-dot"></span>${inner}</button>`;
 /**
- * 时段结论（④）：空闲 / 高峰 / 假日。对应组件的 tierText —— 颜色是状态语义
- * （空闲=成功绿、高峰=警告橙），所以**不加**小方点，只给文字上色。
+ * 时段结论（④）：空闲 / 高峰 / 假日。对应组件的 tierText + 状态点。
+ * 点与字同色（绿=空闲、橙=高峰），形状沿用同一个 `.dsh-balance-mini-minidot` 基类。
  */
-const TIER = (text, kind) => `<span class="dsh-balance-mini-tier ${kind}">${text}</span>`;
+const TIER = (text, kind) =>
+  `<span class="dsh-balance-mini-minidot dot-tier-${kind}"></span>` +
+  `<span class="dsh-balance-mini-tier ${kind}">${text}</span>`;
 /**
  * 完整胶囊，顺序与组件一致：总余额 · 会话累计 · 本轮消耗 · 时段。
  * 前三个数字按「变化速度」由慢到快排列 —— 余额 60 秒刷新，会话每步递增，

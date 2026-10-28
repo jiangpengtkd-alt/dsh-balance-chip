@@ -499,6 +499,8 @@ ck(/\blv-/.test(chipClass), "胶囊带余额分档类（lv-*）", chipClass);
   // 才初始化，提前访问会踩 TDZ（一开始就踩了）。本块的判据足够具体，注释不会误命中。
   const cssSrc = readFileSync(new URL("../lib/client.js", import.meta.url), "utf8");
   const tierCss = (cssSrc.match(/\.dsh-balance-mini-tier[^}]*\}/g) ?? []).join(" ");
+  // 点的规则名是 `.dsh-balance-mini-minidot.dot-tier-*`，不含 `-tier{`，得单独抓
+  const tierDotCss = (cssSrc.match(/\.dsh-balance-mini-minidot\.dot-tier-[^{]*\{[^}]*\}/g) ?? []).join(" ");
   ck(/font:inherit/.test(tierCss) && /line-height:inherit/.test(tierCss),
     "时段段继承字号与行高（不写死 px —— 0.11.1 就栽在这）", tierCss.slice(0, 110));
   ck(!/dsh-balance-mini-tier[^}]*font-size:\s*\d+px/.test(tierCss), "时段段没有写死 font-size");
@@ -506,8 +508,43 @@ ck(/\blv-/.test(chipClass), "胶囊带余额分档类（lv-*）", chipClass);
     "空闲用官方成功绿 token", tierCss.slice(0, 110));
   ck(/\.dsh-balance-mini-tier\.peak\{color:var\(--dsw-alias-state-warn-primary\)\}/.test(tierCss),
     "高峰用官方警告橙 token", tierCss.slice(0, 110));
-  // 不加小方点：时段段里不应出现 minidot
-  ck(!/minidot/.test(String((peakT && peakT.p && peakT.p.className) || "")), "时段段不带小方点（避免与段标识混淆）");
+  // 小方点：与前三段同形状，但颜色是**状态**语义（绿=空闲、橙=高峰）。
+  // 用户明确要求"加个和前面一样的点，用橙绿区分" —— 所以这里断言点存在且颜色类正确，
+  // 同时断言"点 + 字同色"，否则点绿字橙会出现自相矛盾的显示。
+  {
+    const dotOf = (r) => {
+      const walk = (n) => {
+        if (!n || typeof n !== "object") return null;
+        const cls = String((n.p && n.p.className) || "");
+        if (/minidot/.test(cls) && /dot-tier-/.test(cls)) return n;
+        for (const c of n.k || []) { const hit = walk(c); if (hit) return hit; }
+        return null;
+      };
+      return r.btn ? walk(r.btn) : null;
+    };
+    const dPeak = dotOf(snap({ total: 1, peak: true }));
+    const dIdle = dotOf(snap({ total: 1, peak: false }));
+    const dHol = dotOf(snap({ total: 1, peak: false, holiday: true }));
+    const dNone = dotOf(snap(undefined));
+    const dCls = (n) => (n ? String(n.p.className) : "");
+    ck(/dot-tier-peak/.test(dCls(dPeak)), "高峰：状态点是橙色类", dCls(dPeak));
+    ck(/dot-tier-idle/.test(dCls(dIdle)), "空闲：状态点是绿色类", dCls(dIdle));
+    ck(/dot-tier-idle/.test(dCls(dHol)), "假日：状态点按空闲着绿（不是橙）", dCls(dHol));
+    ck(!!dNone, "拿不到时段时点仍在（整段占位，不省略）");
+    ck(/dsh-balance-mini-minidot/.test(dCls(dPeak)), "状态点复用 minidot 基类（尺寸/圆角与前三个一致）", dCls(dPeak));
+    // 点必须在文字之前（视觉顺序：点 → 字）
+    {
+      const kids = snap({ total: 1, peak: true }).btn.k;
+      const iDot = kids.findIndex((n) => n && n.p && /dot-tier-/.test(String(n.p.className || "")));
+      const iTxt = kids.findIndex((n) => n && n.p && /dsh-balance-mini-tier/.test(String(n.p.className || "")));
+      ck(iDot >= 0 && iTxt > iDot, "状态点排在时段文字之前", `dot@${iDot} text@${iTxt}`);
+    }
+    // 颜色 token 必须与浮层底排同一组（否则同一状态两处不同色）
+    ck(/\.dsh-balance-mini-minidot\.dot-tier-idle\{background:var\(--dsw-alias-state-success-primary\)\}/.test(tierDotCss),
+      "空闲点用官方成功绿 token（与浮层同源）", tierDotCss.slice(0, 130));
+    ck(/\.dsh-balance-mini-minidot\.dot-tier-peak\{background:var\(--dsw-alias-state-warn-primary\)\}/.test(tierDotCss),
+      "高峰点用官方警告橙 token（与浮层同源）", tierDotCss.slice(0, 130));
+  }
 }
 
 // ── 标签↔数值必须**成对相邻** ──
