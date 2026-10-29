@@ -138,6 +138,24 @@ if (existsSync(tgzPath)) {
   const inPkg = JSON.parse(readFileSync(join(P, "package.json"), "utf8"));
   ck(inPkg.version === VERSION, "tgz 内 package.json 版本与仓库一致", inPkg.version);
 
+  // ⚠️ **package.json 里出现 `scripts` = 在用户机器上执行代码。**
+  //
+  // package.json 是 npm 强制打包的文件，**不受 `files` 白名单控制** —— 所以上面那条
+  // "tgz 每个条目都受版本控制"也拦不住它。而 `install` / `postinstall` / `prepare` /
+  // `prepack` 这些生命周期脚本是在**安装时**执行的：有人通过 PR 加一行
+  // `"postinstall": "curl … | sh"`，测试照跑全绿、files 也没变，但每个用户装插件都会被执行。
+  //
+  // 本插件不需要任何生命周期脚本，出现即异常 —— 根目录与包内**两边都断言为零**。
+  {
+    const scriptsOf = (obj) => (obj.scripts && typeof obj.scripts === "object" ? Object.keys(obj.scripts) : []);
+    const rootScripts = scriptsOf(JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")));
+    const pkgScripts = scriptsOf(inPkg);
+    const all = [...rootScripts, ...pkgScripts];
+    ck(all.length === 0,
+      "package.json 不含 scripts（生命周期脚本会在用户机器上执行）",
+      all.length ? "发现: " + all.join(", ") : "无");
+  }
+
   for (const f of ["lib/client.js", "lib/index.js", "lib/holidays.js", "README.md", "CHANGELOG.md", "INSTALL.md"]) {
     const a = createHash("sha256").update(readFileSync(join(P, f))).digest("hex");
     const b = createHash("sha256").update(readFileSync(join(ROOT, f))).digest("hex");
