@@ -2,6 +2,47 @@
 
 版本号遵循语义化：修问题记末位，加功能记中位。
 
+## 0.14.0
+
+发版改为 **tag 触发 → CI 构建 → draft 发布**。
+
+### 之前的问题
+
+本机打包 → 手动上传 → 用**同一个文件**算 SHA256。这串哈希只能证明「你下载到的没被中途
+篡改」，证明不了「这个包来自那个 tag 的代码」—— 中间隔着一个看不见的环节：某人的工作区。
+
+对一个会读用户 `~/.dsh/.credentials.yaml` 的插件来说，这个差别很实际：用户能凭它
+"自己查一下"，而不是"相信作者没打错包"。
+
+### 现在
+
+`.github/workflows/release.yml`，在 **push `v*` tag** 时于干净的 Ubuntu 上：
+
+1. checkout **该 tag**（不是某个分支的最新提交）
+2. **先跑全套测试**（selftest / render / heartbeat / refresh / doc-rules）
+3. `node tools/pack-release.mjs` 从这份代码现打 tgz
+4. `node tools/pack-release.mjs --check` 校验产物与 HEAD 一致
+5. 生成 `SHA256SUMS.txt`
+6. 从 `CHANGELOG.md` **自动摘出本版说明**（摘不到就退回通用说明并给出 warning）
+7. `gh release create --draft` 上传 tgz 与校验文件
+
+两条刻意的设计：
+
+- **先测试再打包** —— 宁可发不出去，也不要发出没验证过的包
+- **建成 draft** —— 自动化省掉人肉上传，但不该省掉"人眼看一眼"，确认后手动 Publish
+
+另加一条守卫：**tag 必须与 `package.json` 版本一致**，否则立刻失败。打错 tag 是最容易犯、
+又最难事后发现的错 —— 用户看到版本号明明是对的。
+
+### 发版流程变成
+
+```bash
+git tag -a v0.14.0 -m "..."
+git push origin v0.14.0
+```
+
+然后去 Releases 页面看 draft → 点 Publish。
+
 ## 0.13.10
 
 补一条最锋利的防线：**禁止 `package.json` 出现 `scripts`**。

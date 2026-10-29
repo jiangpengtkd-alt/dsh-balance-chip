@@ -1,0 +1,90 @@
+name: release
+
+# 打 tag 即发版：在**干净环境里**、从**该 tag 的代码**现打产物，再挂到 Release 上。
+#
+# 为什么不用"本机打包 + 手动上传"：
+#   那条链路里，SHA256 是拿上传的那个文件自己算的 —— 它只能证明"下载没被篡改"，
+#   证明不了"这个包来自那个 tag 的代码"。中间隔着一个看不见的环节：某人的工作区。
+#   对一个会读用户 `~/.dsh/.credentials.yaml` 的插件来说，这个差别很重要：
+#   用户能不能自己查"这个包到底从哪来"，只差一次构建记录。
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  # 创建 draft release 并上传附件需要 contents: write。
+  # 这是仓库自带的 GITHUB_TOKEN，不需要任何 secret。
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 版本信息
+        run: |
+          node --version
+          echo "tag = $GITHUB_REF_NAME"
+
+      # ⚠️ 打错 tag 是最容易犯的错，而且事后很难发现（用户看到的版本号明明是对的）。
+      - name: tag 与 package.json 版本一致
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          P="$(node -p "require('./package.json').version")"
+          echo "tag=$V  package.json=$P"
+          if [ "$V" != "$P" ]; then
+            echo "::error::tag $GITHUB_REF_NAME 与 package.json 的版本 $P 不一致"
+            exit 1
+          fi
+
+      # ⚠️ **先跑全套测试再打包**：宁可发不出去，也不要发出一个没验证过的包。
+      # 这套测试与 tests.yml 用的是同一批脚本，不重复实现判据。
+      - name: 全套测试
+        run: |
+          node tools/selftest.mjs
+          node tools/render-test.mjs .
+          node tools/heartbeat-test.mjs .
+          node tools/refresh-test.mjs .
+          node tools/doc-rule-fixtures.mjs
+
+      - name: 从该 tag 的代码打包
+        run: node tools/pack-release.mjs
+
+      - name: 校验产物与 HEAD 一致
+        run: node tools/pack-release.mjs --check
+
+      - name: 生成 SHA256SUMS
+        run: |
+          cd releases
+          sha256sum ./*.tgz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: 从 CHANGELOG 摘出本版说明
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v h="## ${VERSION}" 'index($0,h)==1{p=1;next} p&&/^## /{exit} p' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          # 摘不到就退回通用说明 —— 空白 Release 比没有说明更糟（用户以为什么都没改）。
+          if [ ! -s "$RUNNER_TEMP/notes.md" ]; then
+            echo "::warning::CHANGELOG 里没有 ${VERSION} 的小节，退回通用说明"
+            TGZ="$(cd releases && ls ./*.tgz | head -n1)"
+            printf 'DSH Web GUI 插件：显示账户余额与会话消耗。\n\n安装：\n\n```\ndsh plugin --profile desktop add %s\n```\n\n装完重启 DSH。\n' "$(basename "$TGZ")" > "$RUNNER_TEMP/notes.md"
+          fi
+          echo "--- 说明预览 ---"
+          head -n 12 "$RUNNER_TEMP/notes.md"
+
+      # ⚠️ **建成 draft，不直接发布**：自动化省掉了人肉上传，但不能省掉"人眼看一眼"。
+      # 确认没问题后在网页上点 Publish release 才会对外可见。
+      - name: 创建 draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" releases/*.tgz releases/SHA256SUMS.txt \
+            --draft --verify-tag \
+            --title "dsh-balance-chip ${GITHUB_REF_NAME#v}" \
+            --notes-file "$RUNNER_TEMP/notes.md"
