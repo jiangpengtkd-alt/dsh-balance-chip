@@ -474,6 +474,22 @@ console.log("\n  ── 场景 11：本日消耗的取数路径 ──");
   // 回归：会话日志文件名带格式版本，不能写死 v4 —— 否则 DSH 升格式后本日消耗会无声变空。
   ck(/const sessionLogFile = /.test(src), "存在 sessionLogFile（按版本探测日志文件）");
   ck(!/join\(cacheRoot, ws, id, "session\.v4\.jsonl\.zstd"\)/.test(src), "没有写死 session.v4 文件名");
+
+  // ── 扫描必须离开请求路径（2026-10-29 改）──
+  //
+  // 之前 dayUsage() 是在请求里直接同步扫的：56–78ms，而客户端每 15 秒轮询一次，
+  // 日志大的用户整个宿主事件循环跟着冻结。现在改成「请求只读缓存 + setImmediate 补扫」。
+  ck(/setImmediate\(/.test(src), "补扫用 setImmediate（把扫描推到响应之后）");
+  ck(/scheduleDayRefresh/.test(src), "存在 scheduleDayRefresh（补扫节流，避免重复排队）");
+  // 强判据：scanTodayUsage 的**调用**只能有两处 —— 冷启动一次、后台补扫一次。
+  // 谁再把扫描塞回请求路径，这条立刻变红。
+  {
+    const calls = (src.match(/scanTodayUsage\(\)/g) ?? []).length;
+    ck(calls === 2, "scanTodayUsage 只有两处调用（冷启动 + 后台补扫）", `实际 ${calls} 处`);
+  }
+  // 缓存过期时必须走「排队 + 返回旧值」，而不是就地扫一遍
+  ck(/now - dayCache\.at >= DAY_SCAN_TTL_MS\)\s*\{\s*scheduleDayRefresh\(\);/.test(src),
+    "缓存过期时只排队补扫，不就地扫描");
 }
 
 // ── 场景 12：时段边界（确定性 —— 固定时间戳，不依赖运行时刻与机器时区）──
