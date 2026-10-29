@@ -68,15 +68,32 @@ jobs:
       - name: 从 CHANGELOG 摘出本版说明
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          awk -v h="## ${VERSION}" 'index($0,h)==1{p=1;next} p&&/^## /{exit} p' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+
+          # 每个 Release 都固定带这段：说明"这个包是怎么来的"。
+          # 写在这里而不是 CHANGELOG 里，是因为它每个版本都要出现一次，
+          # 而 CHANGELOG 的小节是各版本各写的。
+          {
+            echo '以后发版都由 CI 根据 tag 自动打包，生成发布草稿，不再手动上传本机打的包。'
+            echo
+            echo '毕竟插件会读用户的凭据文件，安装包对应哪份代码，大家应该能自己查，安全第一，大家放心。'
+            echo
+            echo '---'
+            echo
+          } > "$RUNNER_TEMP/notes.md"
+
+          # 再把本版更新内容接在后面。
+          awk -v h="## ${VERSION}" 'index($0,h)==1{p=1;next} p&&/^## /{exit} p' CHANGELOG.md >> "$RUNNER_TEMP/notes.md"
+
           # 摘不到就退回通用说明 —— 空白 Release 比没有说明更糟（用户以为什么都没改）。
-          if [ ! -s "$RUNNER_TEMP/notes.md" ]; then
-            echo "::warning::CHANGELOG 里没有 ${VERSION} 的小节，退回通用说明"
-            TGZ="$(cd releases && ls ./*.tgz | head -n1)"
-            printf 'DSH Web GUI 插件：显示账户余额与会话消耗。\n\n安装：\n\n```\ndsh plugin --profile desktop add %s\n```\n\n装完重启 DSH。\n' "$(basename "$TGZ")" > "$RUNNER_TEMP/notes.md"
+          if [ "$(wc -l < "$RUNNER_TEMP/notes.md")" -le 6 ]; then
+            echo "::warning::CHANGELOG 里没有 ${VERSION} 的小节，只保留通用说明"
+            echo '## 本版更新' >> "$RUNNER_TEMP/notes.md"
+            echo >> "$RUNNER_TEMP/notes.md"
+            echo '见仓库 [CHANGELOG.md](https://github.com/'"${GITHUB_REPOSITORY}"'/blob/main/CHANGELOG.md)。' >> "$RUNNER_TEMP/notes.md"
           fi
+
           echo "--- 说明预览 ---"
-          head -n 12 "$RUNNER_TEMP/notes.md"
+          head -n 14 "$RUNNER_TEMP/notes.md"
 
       # ⚠️ **建成 draft，不直接发布**：自动化省掉了人肉上传，但不能省掉"人眼看一眼"。
       # 确认没问题后在网页上点 Publish release 才会对外可见。
