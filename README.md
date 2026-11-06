@@ -298,9 +298,10 @@ const peak = weekday && inPeak && !holiday;
 
 ### 节假日数据与维护
 
-`lib/holidays.js` 内置"放假日期表"，2025 与 2026 两年已收录。数据来自国务院办公厅
-每年发布的《关于XXXX年部分节假日安排的通知》，2026 年已与
-[官方原文](https://www.gov.cn/zhengce/content/202511/content_7047090.htm)逐条核对一致。
+`lib/holidays.js` 内置"放假日期表"，**2026 与 2027 两年**已收录。数据来自国务院办公厅
+每年发布的《关于XXXX年部分节假日安排的通知》，两年均已与官方原文逐条核对一致：
+[2026 年](https://www.gov.cn/zhengce/content/202511/content_7047090.htm)、
+[2027 年](https://www.gov.cn/zhengce/content/202611/content_7085101.htm)（国办发明电〔2026〕10号）。
 
 > **每年 11 月前后**国务院会公布次年安排。届时重新生成即可（把年份换成需要的）：
 >
